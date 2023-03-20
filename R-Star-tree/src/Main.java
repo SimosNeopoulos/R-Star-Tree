@@ -1,6 +1,7 @@
 import java.io.*;
 import java.util.ArrayList;
 
+// Μόνο για tests
 public class Main {
 
     private static byte[] serialize(Object obj) throws IOException {
@@ -17,20 +18,24 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        ArrayList<Integer> integers = new ArrayList<>();
-        integers.add(5);
-        byte[] recordInBytes = new byte[0];
-        byte[] goodPutLengthInBytes = new byte[0];
-        try {
-            recordInBytes = serialize(integers);
-            goodPutLengthInBytes = serialize(recordInBytes.length);
-            System.out.println(recordInBytes);
-            System.out.println(goodPutLengthInBytes);
-            System.out.println(recordInBytes.length);
-            System.out.println(goodPutLengthInBytes.length);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+//        int dimensions = 10;
+//        int recordNum = DataHandler.calculateMaxNumOfRecordsInBlock(dimensions);
+//
+//        System.out.println(recordNum);
+//        ArrayList<Double> coordinates = new ArrayList<>();
+//        for (int i = 0; i < dimensions; i++)
+//            coordinates.add(0.0);
+//
+//        ArrayList<Record> records = new ArrayList<>();
+//        for (int i = 0; i < recordNum; i++) {
+//            Record record = new Record(i, "test", coordinates);
+//            records.add(record);
+//
+//        }
+//        DataBlock dataBlock = new DataBlock(1, records);
+//        DataHandler.writeDataFile(dataBlock, 0);
+//        DataBlock newDataBlock = DataHandler.readDataBlock(0);
+//        System.out.println(newDataBlock.getRecords().size());
+//        System.out.println(newDataBlock.getRecords().get(recordNum-1).getId());
     }
 }

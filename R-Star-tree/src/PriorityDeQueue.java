@@ -1,14 +1,14 @@
 import java.util.Collections;
 import java.util.HashSet;
 
-public class AvailableSlotForRecords {
+public class PriorityDeQueue {
     private HashSet<Integer> set;
 
-    public AvailableSlotForRecords() {
+    public PriorityDeQueue() {
         this.set = new HashSet<Integer>();
     }
 
-    public AvailableSlotForRecords(AvailableSlotForRecords oldSet) {
+    public PriorityDeQueue(PriorityDeQueue oldSet) {
         this.set = oldSet.getSet();
     }
 
@@ -24,9 +24,13 @@ public class AvailableSlotForRecords {
         return this.set.isEmpty();
     }
 
-    public int getLocationForEntryInsertion() {
+    public int getAvailableSlotNum() {
+        return this.set.size();
+    }
+
+    public int getMinEntry() {
         if(set.isEmpty())
-            return -1;
+            return 0;
         int min = Collections.min(set, null);
         set.remove(min);
         return min;
