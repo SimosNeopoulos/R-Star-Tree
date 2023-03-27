@@ -2,9 +2,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Record implements Serializable {
-    private final int id;
-    private final String name;
-    private final ArrayList<Double> coordinates;
+    private long id;
+    private String name;
+    private ArrayList<Double> coordinates;
 
     public Record(int id, String name, ArrayList<Double> coordinates) {
         this.id = id;
@@ -12,7 +12,14 @@ public class Record implements Serializable {
         this.coordinates = coordinates;
     }
 
-    public int getId() {
+    public Record(String[] array) {
+        id = Long.parseLong(array[0]);
+        for (int i = 1; i < array.length; i++) {
+//            coordinates.add(Double.parseDouble(array[i]));
+        }
+    }
+
+    public long getId() {
         return id;
     }
 }
