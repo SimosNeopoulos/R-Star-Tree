@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class DataHandler {
     private static final String PATH_TO_DATAFILE = "data_file.dat";
+    private static final String PATH_TO_CSV = "nodes.csv";
     private static final int BLOCK_SIZE = 32 * 1024;
     private static int currentDimensions;
     private static int totalBlocksNum;
@@ -21,23 +22,28 @@ public class DataHandler {
         createDataFile();
     }
 
+    // Works
     private static void createDataFile() {
         metaDataBlock = new MetaDataBlock();
-        writeMetaDataBlockToDataFile();
+        createNewDataBlock();
+        writeAlteredBlocksToDataFile();
     }
 
+    // Works
     private static int getNewDataBlockId() {
-        int id = metaDataBlock.getTotalBlockNum();
         metaDataBlock.increaseTotalBlockNum();
+        int id = metaDataBlock.getTotalBlockNum();
         return id;
     }
 
+    // Works
     private static int findBlockOfRecord(int index) {
         return index / 1000;
     }
 
+    // Works
     private static int findSlotOfRecord(int index) {
-        return (index % 1000) - 1;
+        return (index % 1000);
     }
 
     private static int contractIndexOfRecordLocation(int block, int slot) {
@@ -52,15 +58,16 @@ public class DataHandler {
         int blockId = findBlockOfRecord(slotLocation);
         int slotNum = findSlotOfRecord(slotLocation);
 
-        if(!blockInMemory(blockId)) {
+        if (!blockInMemory(blockId)) {
             loadDataBlock(blockId);
         }
-        
+
         dataBlocksInMemory.get(blockId).deleteRecord(slotNum);
         metaDataBlock.addAlteredBlock(blockId);
         metaDataBlock.addEmptySlot(slotLocation);
     }
 
+    // Works
     private static byte[] serialize(Object obj) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream os = new ObjectOutputStream(out);
@@ -68,13 +75,15 @@ public class DataHandler {
         return out.toByteArray();
     }
 
+    // Works
     private static Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
         ByteArrayInputStream in = new ByteArrayInputStream(data);
         ObjectInputStream is = new ObjectInputStream(in);
         return is.readObject();
     }
 
-    private static int calculateMaxNumOfRecordsInBlock(int recordDimensions) {
+    // Works
+    private static void calculateMaxNumOfRecordsInBlock(int recordDimensions) {
         ArrayList<Record> records = new ArrayList<>();
         int maxNumOfRecordsPerBlock = 0;
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
@@ -89,7 +98,6 @@ public class DataHandler {
 
 
             byte[] recordArrayInBytes = new byte[0];
-            //byte[] goodPutLengthInBytes = new byte[0];
             try {
                 recordArrayInBytes = serialize(dataBlock);
             } catch (IOException e) {
@@ -101,10 +109,76 @@ public class DataHandler {
 
             maxNumOfRecordsPerBlock++;
         }
-        return maxNumOfRecordsPerBlock;
+        metaDataBlock.setMaxRecordsPerBlock(maxNumOfRecordsPerBlock);
     }
 
-    private void createNewDataBlock() {
+    public static void readRecordsFromCSV() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(PATH_TO_CSV))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.length() < 1) {
+                    continue;
+                }
+
+                insertToDataFile(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void insertToDataFile(String line) {
+        int slotLocationForInsertion = findSlotToInsert();
+        readyDataBlockForInsertion(slotLocationForInsertion);
+        insertRecord(new Record(line.split(",")), slotLocationForInsertion);
+    }
+
+    private static void readyDataBlockForInsertion(int slotLocationForInsertion) {
+        int blockForInsertion;
+        if (slotLocationForInsertion < 1000) {
+            blockForInsertion = slotLocationForInsertion;
+        } else {
+            blockForInsertion = findBlockOfRecord(slotLocationForInsertion);
+        }
+
+        if (blockForInsertion > metaDataBlock.getTotalBlockNum()) {
+            createNewDataBlock();
+        } else if (!dataBlocksInMemory.containsKey(blockForInsertion)) {
+            loadDataBlock(blockForInsertion);
+        }
+
+    }
+
+    // Αν το record είναι να προστεθεί σε στο τέλος των records ενός block επιστρέφει int < 1000
+    // Αν το record θα αποθηκευτεί σε θέση που έχει διαγραφεί επιστρέφει int >= 1000
+    private static int findSlotToInsert() {
+        if (metaDataBlock.freeSlotExist()) {
+            return metaDataBlock.getFreeSlot();
+        }
+
+        int totalBlocksNum = metaDataBlock.getTotalBlockNum();
+        int totalSlotsNum = metaDataBlock.getTotalSlotsNum();
+        int maxSlotsPerBlockNum = metaDataBlock.getMaxRecordsPerBlock();
+
+        if (totalBlocksNum < ((totalSlotsNum + 1) / maxSlotsPerBlockNum)) {
+            return totalBlocksNum + 1;
+        }
+        return totalBlocksNum;
+    }
+
+    private static void insertRecord(Record record, int slotForInsertion) {
+        if (slotForInsertion < 1000) {
+            dataBlocksInMemory.get(slotForInsertion).addRecord(record);
+        } else {
+            int blockNum = findBlockOfRecord(slotForInsertion);
+            int slotNum = findSlotOfRecord(slotForInsertion);
+            dataBlocksInMemory.get(blockNum).addToDeletedSlot(record, slotNum);
+        }
+        metaDataBlock.increaseTotalSlotsNum();
+    }
+
+    //Works
+    private static void createNewDataBlock() {
         int id = getNewDataBlockId();
         ArrayList<Record> recordList = new ArrayList<>();
         DataBlock dataBlock = new DataBlock(id, recordList);
@@ -112,6 +186,7 @@ public class DataHandler {
         metaDataBlock.addAlteredBlock(id);
     }
 
+    // Works
     private static MetaDataBlock readMetaDataBlock() {
         MetaDataBlock metaDataBlock = null;
         byte[] byteDataBlock = new byte[BLOCK_SIZE];
@@ -124,6 +199,7 @@ public class DataHandler {
         return metaDataBlock;
     }
 
+    // Works
     private static void writeMetaDataBlockToDataFile() {
         try (RandomAccessFile raf = new RandomAccessFile(PATH_TO_DATAFILE, "rws")) {
             byte[] byteDataBlock = new byte[BLOCK_SIZE];
@@ -135,7 +211,9 @@ public class DataHandler {
         }
     }
 
+    // Works
     public static void writeAlteredBlocksToDataFile() {
+        writeMetaDataBlockToDataFile();
         int alteredBlocksNum = metaDataBlock.getAlteredBlocksNum();
         for (int i = 0; i < alteredBlocksNum; i++) {
             int alteredBlock = metaDataBlock.getMinAlteredBlock();
@@ -144,6 +222,7 @@ public class DataHandler {
         }
     }
 
+    // Works
     private static void writeBlockToDataFile(DataBlock dataBlock, int blockNum) {
         try (RandomAccessFile f = new RandomAccessFile(PATH_TO_DATAFILE, "rw")) {
             byte[] dataBlockInBytes = serialize(dataBlock);
@@ -156,11 +235,13 @@ public class DataHandler {
         }
     }
 
+    // Works
     private static void loadDataBlock(int blockNum) {
         readDataBlock(blockNum);
     }
 
-//TODO: Συγχονευση στο loadDataBlock οταν δεν χρειαζεται πλεον.
+    //TODO: Συγχονευση στο loadDataBlock οταν δεν χρειαζεται πλεον.
+    // Works
     private static DataBlock readDataBlock(int blockNum) {
         byte[] byteDataBlock = new byte[BLOCK_SIZE];
         DataBlock dataBlock = null;
@@ -176,49 +257,33 @@ public class DataHandler {
     }
 
     public static void main(String[] args) throws IOException {
-        int dimensions = 1;
-        int recordNum = DataHandler.calculateMaxNumOfRecordsInBlock(dimensions);
+        initialise();
+        calculateMaxNumOfRecordsInBlock(2);
+        readRecordsFromCSV();
+        System.out.println("Max Records: " + metaDataBlock.getMaxRecordsPerBlock());
+        System.out.println("Total Slots: " + metaDataBlock.getTotalSlotsNum());
+        System.out.println("Total Blocks: " + metaDataBlock.getTotalBlockNum());
+        System.out.println("Slot to insert: " + findSlotToInsert());
+        System.out.println(Integer.MAX_VALUE);
+//        createNewDataBlock();
+//        loadDataBlock(997);
+//        readyDataBlockForInsertion(1);
+//        insertRecord(new Record(-1, "name", new ArrayList<Double>()), 1);
+//        System.out.println("Data Block Id: " + dataBlocksInMemory.get(997).getRecord(1).getId());
 
-        System.out.println(recordNum);
-        ArrayList<Double> coordinates = new ArrayList<>();
-        for (int i = 0; i < dimensions; i++)
-            coordinates.add(0.0);
-
-        ArrayList<Record> records = new ArrayList<>();
-        for (int i = 0; i < recordNum; i++) {
-            Record record = new Record(i, "test", coordinates);
-            records.add(record);
-
-        }
-        DataBlock dataBlock = new DataBlock(1, records);
-        DataHandler.writeBlockToDataFile(dataBlock, 0);
-        DataBlock newDataBlock = DataHandler.readDataBlock(0);
-        System.out.println(newDataBlock.getRecords().size());
-        System.out.println(newDataBlock.getRecords().get(recordNum - 1).getId());
+        writeAlteredBlocksToDataFile();
     }
 
 
-    public int getCurrentDimensions() {
+    public static int getCurrentDimensions() {
         return currentDimensions;
     }
 
-    public void setCurrentDimensions(int currentDimensions) {
-        this.currentDimensions = currentDimensions;
-    }
-
-    public int getTotalBlocksNum() {
+    public static int getTotalBlocksNum() {
         return totalBlocksNum;
     }
 
-    public void setTotalBlocksNum(int totalBlocksNum) {
-        this.totalBlocksNum = totalBlocksNum;
-    }
-
-    public int getTotalRecordsNum() {
+    public static int getTotalRecordsNum() {
         return totalRecordsNum;
-    }
-
-    public void setTotalRecordsNum(int totalRecordsNum) {
-        this.totalRecordsNum = totalRecordsNum;
     }
 }

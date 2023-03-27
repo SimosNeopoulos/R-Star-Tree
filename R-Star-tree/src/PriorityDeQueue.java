@@ -1,7 +1,8 @@
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class PriorityDeQueue {
+public class PriorityDeQueue implements Serializable {
     private HashSet<Integer> set;
 
     public PriorityDeQueue() {

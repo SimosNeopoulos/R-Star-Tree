@@ -6,10 +6,11 @@ public class MetaDataBlock implements Serializable {
     private int totalSlotsNum;
     private PriorityDeQueue freeSlots;
     private PriorityDeQueue alteredBlocks;
+    private int maxRecordsPerBlock;
 
     public MetaDataBlock() {
         this.id = 0;
-        this.totalBlockNum = 1;
+        this.totalBlockNum = 0;
         this.totalSlotsNum = 0;
         this.freeSlots = new PriorityDeQueue();
         this.alteredBlocks = new PriorityDeQueue();
@@ -17,6 +18,14 @@ public class MetaDataBlock implements Serializable {
 
     public void addAlteredBlock(int i) {
         alteredBlocks.add(i);
+    }
+
+    public int getMaxRecordsPerBlock() {
+        return maxRecordsPerBlock;
+    }
+
+    public void setMaxRecordsPerBlock(int maxRecordsPerBlock) {
+        this.maxRecordsPerBlock = maxRecordsPerBlock;
     }
 
     public boolean alteredBlocksExist() {
@@ -28,7 +37,7 @@ public class MetaDataBlock implements Serializable {
     }
 
     public boolean freeSlotExist() {
-        return this.freeSlots.isEmpty();
+        return !this.freeSlots.isEmpty();
     }
 
     public int getAlteredBlocksNum() {
