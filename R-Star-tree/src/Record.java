@@ -13,9 +13,10 @@ public class Record implements Serializable {
     }
 
     public Record(String[] array) {
+        coordinates = new ArrayList<Double>();
         id = Long.parseLong(array[0]);
         for (int i = 1; i < array.length; i++) {
-//            coordinates.add(Double.parseDouble(array[i]));
+            coordinates.add(Double.parseDouble(array[i]));
         }
     }
 
