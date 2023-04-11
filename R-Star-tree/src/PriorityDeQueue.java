@@ -6,7 +6,7 @@ public class PriorityDeQueue implements Serializable {
     private HashSet<Integer> set;
 
     public PriorityDeQueue() {
-        this.set = new HashSet<Integer>();
+        this.set = new HashSet<>();
     }
 
     public PriorityDeQueue(PriorityDeQueue oldSet) {
@@ -25,7 +25,7 @@ public class PriorityDeQueue implements Serializable {
         return this.set.isEmpty();
     }
 
-    public int getAvailableSlotNum() {
+    public int getSize() {
         return this.set.size();
     }
 

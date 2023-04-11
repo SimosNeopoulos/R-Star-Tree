@@ -1,9 +1,11 @@
-public class Boundaries {
+import java.io.Serializable;
 
-    private double upperBound;
-    private double lowerBound;
+public class Bounds implements Serializable {
 
-    public Boundaries(double upperBound, double lowerBound) {
+    private final double upperBound;
+    private final double lowerBound;
+
+    public Bounds(double upperBound, double lowerBound) {
         this.upperBound = upperBound;
         this.lowerBound = lowerBound;
     }

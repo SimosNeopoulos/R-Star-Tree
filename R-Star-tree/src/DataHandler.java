@@ -1,18 +1,31 @@
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 public class DataHandler {
     private static final String PATH_TO_DATAFILE = "data_file.dat";
+    private static final String PATH_TO_INDEX_FILE = "index_file.dat";
     private static final String PATH_TO_CSV = "nodes.csv";
     private static final int BLOCK_SIZE = 32 * 1024;
+    private static int NODE_MAX_ENTRIES;
+    private static int NODE_MIN_ENTRIES;
     private static int currentDimensions;
-    private static int totalBlocksNum;
-    private static int totalRecordsNum;
     private static MetaDataBlock metaDataBlock;
     private static HashMap<Integer, DataBlock> dataBlocksInMemory = new HashMap<>();
+    private static HashMap<Integer, Node> nodesInMemory = new HashMap<>();
+    private static PriorityDeQueue alteredNodes;
+
+    private boolean isNodeInMemory(int nodeIndex) {
+        return nodesInMemory.containsKey(nodeIndex);
+    }
+
+    public void addAlteredNode(int i) {
+        alteredNodes.add(i);
+    }
+
+    public int getAlteredNodesNum() {
+        return alteredNodes.getSet().size();
+    }
 
     public static void initialise() {
         if (new File(PATH_TO_DATAFILE).exists()) {
@@ -82,34 +95,77 @@ public class DataHandler {
         return is.readObject();
     }
 
+    public static int getMaxEntriesPerBlock() {
+        return metaDataBlock.getMaxRecordsPerBlock();
+    }
+
     // Works
     private static void calculateMaxNumOfRecordsInBlock(int recordDimensions) {
         ArrayList<Record> records = new ArrayList<>();
         int maxNumOfRecordsPerBlock = 0;
+
+
+
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
+
             ArrayList<Double> coordinates = new ArrayList<>();
             for (int j = 0; j < recordDimensions; j++) {
                 coordinates.add(0.0);
             }
+
             Record record = new Record(i, "test", coordinates);
 
             records.add(record);
             DataBlock dataBlock = new DataBlock(1, records);
 
 
-            byte[] recordArrayInBytes = new byte[0];
+            byte[] dataBlockInBytes = new byte[0];
             try {
-                recordArrayInBytes = serialize(dataBlock);
+                dataBlockInBytes = serialize(dataBlock);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            if (recordArrayInBytes.length > BLOCK_SIZE)
+            if (dataBlockInBytes.length > BLOCK_SIZE)
                 break;
 
             maxNumOfRecordsPerBlock++;
         }
         metaDataBlock.setMaxRecordsPerBlock(maxNumOfRecordsPerBlock);
+    }
+
+    private static void calculateEntriesPerNode(int dimensionNum) {
+
+
+        ArrayList<Entry> entries = new ArrayList<>();
+        int maxNumOfEntriesPerNode = 0;
+
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            ArrayList<Bounds> bounds = new ArrayList<>();
+            for (int j = 0; j < dimensionNum; j++) {
+                bounds.add(new Bounds(0.0, 0.0));
+            }
+
+            Entry entry = new LeafEntry(new BoundingRectangle(bounds), 1, 1111);
+            entries.add(entry);
+            Node node = new Node(entries);
+
+            byte[] nodeInBytes = new byte[0];
+            try {
+                nodeInBytes = serialize(node);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (nodeInBytes.length > BLOCK_SIZE)
+                break;
+
+            maxNumOfEntriesPerNode++;
+
+        }
+
+        NODE_MAX_ENTRIES = maxNumOfEntriesPerNode;
+        NODE_MIN_ENTRIES = (int) (0.4 *  NODE_MAX_ENTRIES);
     }
 
     public static void readRecordsFromCSV() {
@@ -228,35 +284,63 @@ public class DataHandler {
             byte[] dataBlockInBytes = serialize(dataBlock);
             byte[] block = new byte[BLOCK_SIZE];
             System.arraycopy(dataBlockInBytes, 0, block, 0, dataBlockInBytes.length);
-            f.seek(blockNum * BLOCK_SIZE);
+            f.seek((long) blockNum * BLOCK_SIZE);
             f.write(block);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // Works
-    private static void loadDataBlock(int blockNum) {
-        readDataBlock(blockNum);
+    private static void writeNodeToIndexFile(Node node, int blockNum) {
+        try (RandomAccessFile f = new RandomAccessFile(PATH_TO_INDEX_FILE, "rw")) {
+            byte[] nodeInBytes = serialize(node);
+            byte[] block = new byte[BLOCK_SIZE];
+            System.arraycopy(nodeInBytes, 0, block, 0, nodeInBytes.length);
+            f.seek((long) blockNum * BLOCK_SIZE);
+            f.write(block);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    //TODO: Συγχονευση στο loadDataBlock οταν δεν χρειαζεται πλεον.
+    private static void loadIndexNode(int blockNum) {
+        byte[] byteNode = new byte[BLOCK_SIZE];
+        Node node = null;
+        try (RandomAccessFile f = new RandomAccessFile(PATH_TO_INDEX_FILE, "rw")) {
+            f.seek((long) blockNum * BLOCK_SIZE);
+            f.read(byteNode, 0, BLOCK_SIZE);
+            node = (Node) deserialize(byteNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        nodesInMemory.put(node.getIndexBlockLocation(), node);
+    }
+
+    public static void writeAlteredNodesToIndexFile() {
+        int alteredNodesNum = alteredNodes.getSize();
+        for (int i = 0; i < alteredNodesNum; i++) {
+            int alteredBlock = alteredNodes.getMinEntry();
+            Node node = nodesInMemory.get(alteredBlock);
+            writeNodeToIndexFile(node, alteredBlock);
+        }
+    }
+
+
     // Works
-    private static DataBlock readDataBlock(int blockNum) {
+    private static void loadDataBlock(int blockNum) {
         byte[] byteDataBlock = new byte[BLOCK_SIZE];
         DataBlock dataBlock = null;
         try (RandomAccessFile f = new RandomAccessFile(PATH_TO_DATAFILE, "rw")) {
-            f.seek(blockNum * BLOCK_SIZE);
+            f.seek((long) blockNum * BLOCK_SIZE);
             f.read(byteDataBlock, 0, BLOCK_SIZE);
             dataBlock = (DataBlock) deserialize(byteDataBlock);
         } catch (Exception e) {
             e.printStackTrace();
         }
         dataBlocksInMemory.put(dataBlock.getId(), dataBlock);
-        return dataBlock;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args){
         initialise();
         calculateMaxNumOfRecordsInBlock(2);
         readRecordsFromCSV();
@@ -264,7 +348,9 @@ public class DataHandler {
         System.out.println("Total Slots: " + metaDataBlock.getTotalSlotsNum());
         System.out.println("Total Blocks: " + metaDataBlock.getTotalBlockNum());
         System.out.println("Slot to insert: " + findSlotToInsert());
-        System.out.println(Integer.MAX_VALUE);
+        calculateEntriesPerNode(2);
+        System.out.println("Max num of entries: " + NODE_MAX_ENTRIES);
+        System.out.println("Min num of entries: " + NODE_MIN_ENTRIES);
 //        createNewDataBlock();
 //        loadDataBlock(997);
 //        readyDataBlockForInsertion(1);
@@ -279,11 +365,11 @@ public class DataHandler {
         return currentDimensions;
     }
 
-    public static int getTotalBlocksNum() {
-        return totalBlocksNum;
+    public static int getMaxEntriesPerNode() {
+        return NODE_MAX_ENTRIES;
     }
 
-    public static int getTotalRecordsNum() {
-        return totalRecordsNum;
+    public static int getMinEntriesPerNode() {
+        return NODE_MIN_ENTRIES;
     }
 }

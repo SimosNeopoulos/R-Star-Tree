@@ -72,7 +72,7 @@ public class MetaDataBlock implements Serializable {
     }
 
     public int getValidSlotNum() {
-        return totalSlotsNum - freeSlots.getAvailableSlotNum();
+        return totalSlotsNum - freeSlots.getSize();
     }
 
     public PriorityDeQueue getFreeSlots() {
