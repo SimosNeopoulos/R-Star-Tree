@@ -31,7 +31,7 @@ public class DataBlock implements Serializable {
     }
 
     public void deleteRecord(int slotNum) {
-        Record record = new Record(-1, "dummyRecord", new ArrayList<Double>());
+        Record record = new Record(-1, new ArrayList<>());
         this.records.set(slotNum, record);
     }
 

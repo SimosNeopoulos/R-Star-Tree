@@ -3,12 +3,10 @@ import java.util.ArrayList;
 
 public class Record implements Serializable {
     private long id;
-    private String name;
     private ArrayList<Double> coordinates;
 
-    public Record(int id, String name, ArrayList<Double> coordinates) {
+    public Record(int id, ArrayList<Double> coordinates) {
         this.id = id;
-        this.name = name;
         this.coordinates = coordinates;
     }
 
@@ -18,6 +16,10 @@ public class Record implements Serializable {
         for (int i = 1; i < array.length; i++) {
             coordinates.add(Double.parseDouble(array[i]));
         }
+    }
+
+    public double getCoordinate(int i) {
+        return coordinates.get(i);
     }
 
     public long getId() {

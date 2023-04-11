@@ -3,14 +3,14 @@ import java.util.ArrayList;
 
 public class NonLeafEntry implements Serializable, Entry  {
     private BoundingRectangle boundingRectangle;
-    private long childPTR;
+    private int childPTR;
 
-    public NonLeafEntry(ArrayList<Entry> entries, long childPTR) {
-        this.boundingRectangle = EntriesCalculator.getMinimumBoundingBoxForEntries(entries);
+    public NonLeafEntry(ArrayList<Entry> entries, int childPTR) {
+        this.boundingRectangle = EntriesCalculator.getMinimumBoundingRectangleForEntries(entries);
         this.childPTR = childPTR;
     }
 
-    public NonLeafEntry(BoundingRectangle boundingRectangle, long childPTR) {
+    public NonLeafEntry(BoundingRectangle boundingRectangle, int childPTR) {
         this.boundingRectangle = boundingRectangle;
         this.childPTR = childPTR;
     }
@@ -19,11 +19,11 @@ public class NonLeafEntry implements Serializable, Entry  {
         return boundingRectangle;
     }
 
-    public long getChildPTR() {
+    public int getChildPTR() {
         return childPTR;
     }
 
-    public void reAdjustBoundingBox(BoundingRectangle boundingRectangle) {
-        this.boundingRectangle = boundingRectangle;
+    public void reAdjustBoundingBox(Entry entry) {
+        this.boundingRectangle = EntriesCalculator.getNewMinBoundingRectangle(this.boundingRectangle, entry);
     }
 }
