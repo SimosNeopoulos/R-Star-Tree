@@ -1,12 +1,15 @@
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 public class RStarTree {
     private int totalLevelNum;
-    private final int ROOT_LOCATION = 0;
-    private final int LEAF_LEVEL = 1;
+    private HashSet<Integer> levelsVisited;
+    public static final int ROOT_LOCATION_IN_INDEX_FILE = 1;
+    public static final int LEAF_LEVEL = 1;
 
-    public RStarTree(boolean RStarTreeExists) {
-        if (!RStarTreeExists) {
+    public RStarTree() {
+        if (!DataHandler.initialiseIndexFile()) {
             int dataBlockNum = DataHandler.getTotalBlockNum();
             for (int i = 1; i < dataBlockNum; i++) {
                 DataBlock dataBlock = DataHandler.getDataBlock(i);
@@ -26,40 +29,52 @@ public class RStarTree {
                     insertData(leafEntry);
                 }
             }
-            return;
         }
+
+        totalLevelNum = DataHandler.getTotalTreeLevelNum();
         // TODO: ΟΤΑΝ ΥΠΑΡΧΕΙ ΗΔΗ ΚΑΤΑΛΟΓΟΣ
     }
 
     public void insertData(LeafEntry leafEntry) {
+        levelsVisited = new HashSet<>();
         insert(leafEntry, 1, null, null);
     }
 
     private Entry insert(Entry entryToInsert, int levelToInsert, Node parentNode, NonLeafEntry parentEntry) {
-        Node childNode = null;
+        Node childNode;
 
-        if (parentNode == null && parentEntry == null) {
+        if (parentEntry == null) {
             childNode = getRoot();
         } else {
-            parentEntry.reAdjustBoundingBox(entryToInsert);
-            // TODO: Make function that updates the "parentNode" in the HashMap
-            // TODO: add it here
-            // (also make metaDataNode functional in DataHandler)
+            parentEntry.reAdjustBoundingRectangle(entryToInsert);
+            DataHandler.updateNode(parentNode);
             childNode = DataHandler.getNodeFromIndexFile(parentEntry.getChildPTR());
         }
 
         if (childNode.getTreeLevel() == levelToInsert) {
             childNode.addEntry(entryToInsert);
-            // TODO: and here
+            DataHandler.updateNode(childNode);
         } else {
-            NonLeafEntry bestParentEntry = chooseLeaf(childNode, entryToInsert, levelToInsert);
+            NonLeafEntry bestParentEntry = chooseLeaf(childNode, entryToInsert);
             Entry newSearchEntry = insert(entryToInsert, levelToInsert, childNode, bestParentEntry);
+
+            if (newSearchEntry != null) {
+                childNode.addEntry(newSearchEntry);
+                DataHandler.updateNode(childNode);
+            } else {
+                DataHandler.updateNode(childNode);
+                return null;
+            }
+        }
+
+        if (childNode.getEntries().size() > DataHandler.getMaxEntriesPerNode()) {
+            return overFlowTreatment(parentNode, childNode, parentEntry);
         }
 
         return null;
     }
 
-    private NonLeafEntry chooseLeaf(Node node, Entry entryToInsert, int levelToInsert) {
+    private NonLeafEntry chooseLeaf(Node node, Entry entryToInsert) {
         ArrayList<Entry> entries = node.getEntries();
         int bestParentEntryIndex = 0;
         int minAreaDifference = Integer.MAX_VALUE;
@@ -67,8 +82,8 @@ public class RStarTree {
         for (int i = 0; i < entries.size(); i++) {
             Entry currentEntry = entries.get(i);
 
-            double areaBefore = currentEntry.getBoundingBox().getArea();
-            double areaAfter = EntriesCalculator.getNewMinBoundingRectangle(currentEntry.getBoundingBox(), entryToInsert).getArea();
+            double areaBefore = currentEntry.getBoundingRectangle().getArea();
+            double areaAfter = EntriesCalculator.getNewMinBoundingRectangle(currentEntry.getBoundingRectangle(), entryToInsert).getArea();
 
             if (areaAfter - areaBefore < minAreaDifference) {
                 bestParentEntryIndex = i;
@@ -77,7 +92,68 @@ public class RStarTree {
         return (NonLeafEntry) entries.get(bestParentEntryIndex);
     }
 
+    private Entry overFlowTreatment(Node parentNode, Node childNode, NonLeafEntry parentEntry) {
+        if (childNode.getIndexBlockLocation() != ROOT_LOCATION_IN_INDEX_FILE && !this.levelsVisited.contains(childNode.getTreeLevel())) {
+
+            this.levelsVisited.add(childNode.getTreeLevel());
+            reInsert(parentNode, childNode, parentEntry);
+            return null;
+        }
+
+        ArrayList<Node> splittedNodes = EntriesCalculator.chooseSplitIndex(EntriesCalculator.chooseSplitAxis(childNode), childNode.getTreeLevel());
+        childNode.replaceEntries(splittedNodes.get(0).getEntries());
+        Node newNode = splittedNodes.get(1);
+        DataHandler.increaseTotalNodeNum();
+
+        if (childNode.getIndexBlockLocation() == ROOT_LOCATION_IN_INDEX_FILE) {
+            DataHandler.updateNode(childNode);
+            int newNodeLocation = DataHandler.addNewNode(newNode, false);
+
+            parentEntry.reAdjustBoundingRectangle(childNode.getEntries());
+            DataHandler.updateNode(parentNode);
+
+            return new NonLeafEntry(newNode.getEntries(), newNodeLocation);
+        }
+
+        int childNodeLocation = DataHandler.addNewNode(childNode, false);
+        int newNodeLocation = DataHandler.addNewNode(newNode, false);
+        DataHandler.increaseTotalNodeNum();
+        DataHandler.increaseTotalLevelNum();
+
+        Node newRootNode = new Node(ROOT_LOCATION_IN_INDEX_FILE, DataHandler.getTotalTreeLevelNum());
+        newRootNode.addEntry(new NonLeafEntry(childNode.getEntries(), childNodeLocation));
+        newRootNode.addEntry(new NonLeafEntry(newNode.getEntries(), newNodeLocation));
+        DataHandler.addNewNode(newRootNode, true);
+
+        return null;
+
+    }
+
+    private void reInsert(Node parentNode, Node childNode, NonLeafEntry parentEntry) {
+        ArrayList<Entry> entries = childNode.getEntries();
+        ArrayList<EntryComparator> toBeSorted = new ArrayList<>();
+        int p = DataHandler.getPReInsertNum();
+
+        for (Entry entry : entries) {
+            toBeSorted.add(new EntryComparator(EntriesCalculator.calculateCenterDistanceOfEntries(entry, parentEntry), entry));
+        }
+
+        toBeSorted.sort(new EntryComparator(0.0, null));
+
+        childNode.replaceEntriesFromComparator((ArrayList<EntryComparator>) toBeSorted.subList(0, p));
+
+        parentEntry.reAdjustBoundingRectangle(childNode.getEntries());
+        DataHandler.updateNode(parentNode);
+        DataHandler.updateNode(childNode);
+
+        List<EntryComparator> deletedEntries = toBeSorted.subList(p, toBeSorted.size());
+
+        for (EntryComparator reEntry : deletedEntries) {
+            insert(reEntry.getEntry(), 1, null, null);
+        }
+    }
+
     private Node getRoot() {
-        return DataHandler.getNodeFromIndexFile(ROOT_LOCATION);
+        return DataHandler.getNodeFromIndexFile(ROOT_LOCATION_IN_INDEX_FILE);
     }
 }

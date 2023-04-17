@@ -17,11 +17,19 @@ public class DataHandler {
         return nodesInMemory.containsKey(nodeIndex);
     }
 
-    public void addAlteredNode(int i) {
+    public static int getPReInsertNum() {
+        return metaDataNode.getReInsertPEntries();
+    }
+
+    public static int getTotalTreeLevelNum() {
+        return metaDataNode.getTotalLevelNum();
+    }
+
+    public static void addAlteredNode(int i) {
         metaDataNode.addAlteredNode(i);
     }
 
-    public int getAlteredNodesNum() {
+    public static int getAlteredNodesNum() {
         return metaDataNode.getAlteredNodesNum();
     }
 
@@ -29,14 +37,59 @@ public class DataHandler {
         currentDimensions = dimensions;
     }
 
-    public static void initialise() {
+    public static boolean initialiseIndexFile() {
+        if (new File(PATH_TO_INDEX_FILE).exists()) {
+            metaDataNode = readMetaDataNode();
+            return true;
+        }
+        createIndexFile();
+        return false;
+    }
+
+    private static void createIndexFile() {
+        metaDataNode = new MetaDataNode();
+        createRoot();
+        writeAlteredNodesToIndexFile();
+    }
+
+    public static void updateNode(Node node) {
+        nodesInMemory.put(node.getIndexBlockLocation(), node);
+        addAlteredNode(node.getIndexBlockLocation());
+    }
+
+    public static void increaseTotalLevelNum() {
+        metaDataNode.increaseTotalLevelNum();
+    }
+
+    public static void increaseTotalNodeNum() {
+        metaDataNode.increaseTotalNodesNum();
+    }
+
+    public static int addNewNode(Node node, boolean isRoot) {
+        int nodeLocation;
+        if (isRoot) {
+            nodeLocation = RStarTree.ROOT_LOCATION_IN_INDEX_FILE;
+        } else {
+            nodeLocation = metaDataNode.getTotalNodesNum();
+        }
+        node.setIndexBlockLocation(nodeLocation);
+        updateNode(node);
+        return nodeLocation;
+    }
+
+    private static void createRoot() {
+        Node root = new Node(1,1);
+        nodesInMemory.put(root.getIndexBlockLocation(), root);
+        addAlteredNode(root.getIndexBlockLocation());
+    }
+
+    public static void initialiseDataFile() {
         if (new File(PATH_TO_DATAFILE).exists()) {
             metaDataBlock = readMetaDataBlock();
             return;
         }
         createDataFile();
     }
-
     // Works
     private static void createDataFile() {
         metaDataBlock = new MetaDataBlock();
@@ -150,7 +203,7 @@ public class DataHandler {
 
             Entry entry = new LeafEntry(new BoundingRectangle(bounds), 1, 1111);
             entries.add(entry);
-            Node node = new Node(entries);
+            Node node = new Node(entries, 1, 1);
 
             byte[] nodeInBytes = new byte[0];
             try {
@@ -167,7 +220,6 @@ public class DataHandler {
         }
 
         metaDataNode.setNodeMaxEntriesNum(maxNumOfEntriesPerNode);
-        metaDataNode.setNodeMinEntriesNum();
     }
 
     public static void readRecordsFromCSV() {
@@ -244,6 +296,18 @@ public class DataHandler {
         metaDataBlock.addAlteredBlock(id);
     }
 
+    private static MetaDataNode readMetaDataNode() {
+        MetaDataNode metaDataNode = null;
+        byte[] byteDataNode = new byte[BLOCK_SIZE];
+        try (RandomAccessFile raf = new RandomAccessFile(PATH_TO_INDEX_FILE, "rws")) {
+            raf.read(byteDataNode, 0, BLOCK_SIZE);
+            metaDataNode = (MetaDataNode) deserialize(byteDataNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return metaDataNode;
+    }
+
     // Works
     private static MetaDataBlock readMetaDataBlock() {
         MetaDataBlock metaDataBlock = null;
@@ -255,6 +319,17 @@ public class DataHandler {
             e.printStackTrace();
         }
         return metaDataBlock;
+    }
+
+    private static void writeMetaDataNodeToIndexFile() {
+        try (RandomAccessFile raf = new RandomAccessFile(PATH_TO_INDEX_FILE, "rws")) {
+            byte[] byteDataNode = new byte[BLOCK_SIZE];
+            byte[] serializedBlock = serialize(metaDataNode);
+            System.arraycopy(serializedBlock, 0, byteDataNode, 0, serializedBlock.length);
+            raf.write(byteDataNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // Works
@@ -319,6 +394,7 @@ public class DataHandler {
     }
 
     public static void writeAlteredNodesToIndexFile() {
+        writeMetaDataNodeToIndexFile();
         int alteredNodesNum = metaDataNode.getAlteredNodesNum();
         for (int i = 1; i < alteredNodesNum; i++) {
             int alteredBlock = metaDataBlock.getMinAlteredBlock();
@@ -343,7 +419,7 @@ public class DataHandler {
     }
 
     public static void main(String[] args){
-        initialise();
+        initialiseDataFile();
         calculateMaxNumOfRecordsInBlock();
         readRecordsFromCSV();
         System.out.println("Max Records: " + metaDataBlock.getMaxRecordsPerBlock());

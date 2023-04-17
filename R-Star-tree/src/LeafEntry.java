@@ -12,7 +12,7 @@ public class LeafEntry implements Serializable, Entry {
         this.dataFileLocation = dataFileLocation;
     }
 
-    public BoundingRectangle getBoundingBox() {
+    public BoundingRectangle getBoundingRectangle() {
         return boundingRectangle;
     }
 

@@ -6,7 +6,20 @@ public class Node implements Serializable {
     private int treeLevel;
     private ArrayList<Entry> entries;
 
-    public Node(ArrayList<Entry> entries) {
+    public Node(ArrayList<Entry> entries, int treeLevel) {
+        this.treeLevel = treeLevel;
+        this.entries = entries;
+    }
+
+    public Node(int indexBlockLocation, int treeLevel) {
+        this.indexBlockLocation = indexBlockLocation;
+        this.treeLevel = treeLevel;
+        entries = new ArrayList<>();
+    }
+
+    public Node(ArrayList<Entry> entries, int indexBlockLocation, int treeLevel) {
+        this.indexBlockLocation = indexBlockLocation;
+        this.treeLevel = treeLevel;
         this.entries = entries;
     }
 
@@ -16,6 +29,14 @@ public class Node implements Serializable {
 
     public ArrayList<Entry> getEntries() {
         return entries;
+    }
+
+    public void replaceEntries(ArrayList<Entry> entries) {
+        this.entries = entries;
+    }
+
+    public void replaceEntriesFromComparator(ArrayList<EntryComparator> entries) {
+        this.entries = EntriesCalculator.getEntriesFromEntryComparator(entries);
     }
 
     public void addEntry(Entry entry) {

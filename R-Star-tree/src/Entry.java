@@ -1,3 +1,3 @@
 public interface Entry {
-    BoundingRectangle getBoundingBox();
+    BoundingRectangle getBoundingRectangle();
 }
