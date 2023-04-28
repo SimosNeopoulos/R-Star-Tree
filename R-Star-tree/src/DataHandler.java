@@ -428,7 +428,6 @@ public class DataHandler {
         }
     }
 
-
     // Works
     private static void loadDataBlock(int blockNum) {
         byte[] byteDataBlock = new byte[BLOCK_SIZE];
@@ -441,55 +440,6 @@ public class DataHandler {
             e.printStackTrace();
         }
         dataBlocksInMemory.put(dataBlock.getId(), dataBlock);
-    }
-
-
-    public static void main(String[] args) {
-        System.out.println(askForDimensions());
-//        initialiseDataFile();
-//        RStarTree rStarTree = new RStarTree();
-//        initialiseIndexFile();
-//        setCurrentDimensions(1);
-//        calculateEntriesPerNode();
-//        System.out.println(metaDataNode.getMaxEntriesNum());
-//        System.out.println(metaDataNode.getMinEntriesNum());
-//        System.out.println(metaDataNode.getTotalNodesNum());
-//        System.out.println(metaDataNode.getTotalLevelNum());
-//        int num = 5;
-//        ArrayList<LeafEntry> entries = tempGetEntries(num);
-//        for (int i=0; i < num; i++) {
-//            rStarTree.insertData(entries.get(i));
-//        }
-//        System.out.println(DataHandler.getNodeFromIndexFile(1).getEntries().size());
-//        System.out.println(DataHandler.getNodeFromIndexFile(4));
-//        for (Entry entry : DataHandler.getNodeFromIndexFile(1).getEntries()) {
-//            NonLeafEntry entry1 = (NonLeafEntry) entry;
-//            System.out.println("Entry child " + entry1.getChildPTR());
-//        }
-
-
-//        loadIndexNode(1);
-//        System.out.println(isNodeInMemory(1));
-
-
-//        calculateMaxNumOfRecordsInBlock();
-//        readRecordsFromCSV();
-//        System.out.println("Max Records: " + metaDataBlock.getMaxRecordsPerBlock());
-//        System.out.println("Total Slots: " + metaDataBlock.getTotalSlotsNum());
-//        System.out.println("Total Blocks: " + metaDataBlock.getTotalBlockNum());
-//        System.out.println("Slot to insert: " + findSlotToInsert());
-//        calculateEntriesPerNode();
-//        System.out.println("Max num of entries: " + metaDataNode.getMaxEntriesNum());
-//        System.out.println("Min num of entries: " + metaDataNode.getMinEntriesNum());
-//        createNewDataBlock();
-//        loadDataBlock(997);
-//        readyDataBlockForInsertion(1);
-//        insertRecord(new Record(-1, "name", new ArrayList<Double>()), 1);
-//        System.out.println("Data Block Id: " + dataBlocksInMemory.get(997).getRecord(1).getId());
-
-//        writeAlteredBlocksToDataFile();
-
-//        writeAlteredNodesToIndexFile();
     }
 
     public static Record getRecordFromDataFile(int recordLocation) {

@@ -1,3 +1,4 @@
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -38,14 +39,15 @@ public class Main {
 
     public static void main(String[] args) {
         DataHandler.initialiseDataFile();
+        System.out.println(DataHandler.getDataBlock(15).getRecordSize());
         System.out.println("Total Block num: " + DataHandler.getTotalBlockNum());
         System.out.println("Total records: " + DataHandler.getTotalRecords());
         System.out.println("Max Records per Block: " + DataHandler.getMaxEntriesPerBlock());
-//        RStarTree rStarTree = new RStarTree();
-//        System.out.println(rStarTree.getTotalLevelNum());
-//        Node root = rStarTree.getRoot();
-//        Main main = new Main();
-//        main.numOfLeafEntries(root);
-//        System.out.println(main.numOfEntries);
+        RStarTree rStarTree = new RStarTree();
+        System.out.println(rStarTree.getTotalLevelNum());
+        Node root = rStarTree.getRoot();
+        Main main = new Main();
+        main.numOfLeafEntries(root);
+        System.out.println(main.numOfEntries);
     }
 }
