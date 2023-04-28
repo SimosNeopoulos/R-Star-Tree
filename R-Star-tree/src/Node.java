@@ -27,6 +27,10 @@ public class Node implements Serializable {
         return treeLevel;
     }
 
+    public boolean isLeaf() {
+        return treeLevel == RStarTree.LEAF_LEVEL;
+    }
+
     public ArrayList<Entry> getEntries() {
         return entries;
     }

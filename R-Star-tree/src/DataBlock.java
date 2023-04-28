@@ -35,7 +35,7 @@ public class DataBlock implements Serializable {
         this.records.set(slotNum, record);
     }
 
-    public int getRecordLength() {
+    public int getRecordSize() {
         return records.size();
     }
 

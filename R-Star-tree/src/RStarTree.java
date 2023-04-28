@@ -3,17 +3,19 @@ import java.util.HashSet;
 import java.util.List;
 
 public class RStarTree {
-    private int totalLevelNum;
     private HashSet<Integer> levelsVisited;
     public static final int ROOT_LOCATION_IN_INDEX_FILE = 1;
     public static final int LEAF_LEVEL = 1;
+    public int numOfInsertsTest;
 
     public RStarTree() {
+        numOfInsertsTest = 0;
         if (!DataHandler.initialiseIndexFile()) {
             int dataBlockNum = DataHandler.getTotalBlockNum();
             for (int i = 1; i < dataBlockNum; i++) {
+
                 DataBlock dataBlock = DataHandler.getDataBlock(i);
-                int dataBlockRecordNum = dataBlock.getRecordLength();
+                int dataBlockRecordNum = dataBlock.getRecordSize();
 
                 for (int j = 0; j < dataBlockRecordNum; j++) {
                     int recordDataFileLocation = DataHandler.calculateDataFileLocationOfRecord(i, j);
@@ -27,17 +29,22 @@ public class RStarTree {
                     LeafEntry leafEntry = new LeafEntry(new BoundingRectangle(dimensionsBounds), record.getId(), recordDataFileLocation);
 
                     insertData(leafEntry);
+                    numOfInsertsTest++;
                 }
             }
+            System.out.println("Num of inserts: " + numOfInsertsTest);
+            DataHandler.writeAlteredNodesToIndexFile();
         }
-
-        totalLevelNum = DataHandler.getTotalTreeLevelNum();
         // TODO: ΟΤΑΝ ΥΠΑΡΧΕΙ ΗΔΗ ΚΑΤΑΛΟΓΟΣ
+    }
+
+    public int getTotalLevelNum() {
+        return DataHandler.getTotalTreeLevelNum();
     }
 
     public void insertData(LeafEntry leafEntry) {
         levelsVisited = new HashSet<>();
-        insert(leafEntry, 1, null, null);
+        insert(leafEntry, LEAF_LEVEL, null, null);
     }
 
     private Entry insert(Entry entryToInsert, int levelToInsert, Node parentNode, NonLeafEntry parentEntry) {
@@ -103,9 +110,8 @@ public class RStarTree {
         ArrayList<Node> splittedNodes = EntriesCalculator.chooseSplitIndex(EntriesCalculator.chooseSplitAxis(childNode), childNode.getTreeLevel());
         childNode.replaceEntries(splittedNodes.get(0).getEntries());
         Node newNode = splittedNodes.get(1);
-        DataHandler.increaseTotalNodeNum();
 
-        if (childNode.getIndexBlockLocation() == ROOT_LOCATION_IN_INDEX_FILE) {
+        if (childNode.getIndexBlockLocation() != ROOT_LOCATION_IN_INDEX_FILE) {
             DataHandler.updateNode(childNode);
             int newNodeLocation = DataHandler.addNewNode(newNode, false);
 
@@ -117,7 +123,7 @@ public class RStarTree {
 
         int childNodeLocation = DataHandler.addNewNode(childNode, false);
         int newNodeLocation = DataHandler.addNewNode(newNode, false);
-        DataHandler.increaseTotalNodeNum();
+
         DataHandler.increaseTotalLevelNum();
 
         Node newRootNode = new Node(ROOT_LOCATION_IN_INDEX_FILE, DataHandler.getTotalTreeLevelNum());
@@ -140,7 +146,7 @@ public class RStarTree {
 
         toBeSorted.sort(new EntryComparator(0.0, null));
 
-        childNode.replaceEntriesFromComparator((ArrayList<EntryComparator>) toBeSorted.subList(0, p));
+        childNode.replaceEntriesFromComparator(new ArrayList<>(toBeSorted.subList(0, p)));
 
         parentEntry.reAdjustBoundingRectangle(childNode.getEntries());
         DataHandler.updateNode(parentNode);
@@ -153,7 +159,7 @@ public class RStarTree {
         }
     }
 
-    private Node getRoot() {
+    public Node getRoot() {
         return DataHandler.getNodeFromIndexFile(ROOT_LOCATION_IN_INDEX_FILE);
     }
 }

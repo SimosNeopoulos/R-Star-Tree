@@ -1,12 +1,16 @@
-public class MetaDataNode {
+import java.io.Serializable;
+
+public class MetaDataNode implements Serializable {
     private int totalNodesNum;
     private int totalLevelNum;
     private int nodeMaxEntriesNum;
     private int nodeMinEntriesNum;
     private int reInsertPEntries;
-    private static PriorityDeQueue alteredNodes;
+    private PriorityDeQueue alteredNodes;
 
     public MetaDataNode() {
+        totalNodesNum = 0;
+        totalLevelNum = 1;
         alteredNodes = new PriorityDeQueue();
     }
 
@@ -28,8 +32,8 @@ public class MetaDataNode {
 
     public void setNodeMaxEntriesNum(int nodeMaxEntriesNum) {
         this.nodeMaxEntriesNum = nodeMaxEntriesNum;
-        this.nodeMinEntriesNum = (int) (0.4 *  nodeMaxEntriesNum);
-        this.reInsertPEntries = (int) (0.3 * nodeMaxEntriesNum);
+        this.nodeMinEntriesNum = (int) (0.4 * nodeMaxEntriesNum);
+        this.reInsertPEntries = (int) (0.4 * nodeMaxEntriesNum); // TODO: Να κανω το 0.4 σε 0.3 οταν τελειωσω με τα tests
     }
 
     public int getTotalNodesNum() {

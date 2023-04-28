@@ -1,19 +1,19 @@
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Scanner;
 
 public class DataHandler {
     private static final String PATH_TO_DATAFILE = "data_file.dat";
     private static final String PATH_TO_INDEX_FILE = "index_file.dat";
     private static final String PATH_TO_CSV = "nodes.csv";
     private static final int BLOCK_SIZE = 32 * 1024;
-    private static int currentDimensions;
     private static MetaDataBlock metaDataBlock;
     private static HashMap<Integer, DataBlock> dataBlocksInMemory = new HashMap<>();
     private static HashMap<Integer, Node> nodesInMemory = new HashMap<>();
     private static MetaDataNode metaDataNode;
 
-    private boolean isNodeInMemory(int nodeIndex) {
+    private static boolean isNodeInMemory(int nodeIndex) {
         return nodesInMemory.containsKey(nodeIndex);
     }
 
@@ -25,6 +25,7 @@ public class DataHandler {
         return metaDataNode.getTotalLevelNum();
     }
 
+    // Works
     public static void addAlteredNode(int i) {
         metaDataNode.addAlteredNode(i);
     }
@@ -33,10 +34,7 @@ public class DataHandler {
         return metaDataNode.getAlteredNodesNum();
     }
 
-    public static void setCurrentDimensions(int dimensions) {
-        currentDimensions = dimensions;
-    }
-
+    // Works (probably)
     public static boolean initialiseIndexFile() {
         if (new File(PATH_TO_INDEX_FILE).exists()) {
             metaDataNode = readMetaDataNode();
@@ -46,30 +44,38 @@ public class DataHandler {
         return false;
     }
 
+    // Works (probably)
     private static void createIndexFile() {
         metaDataNode = new MetaDataNode();
         createRoot();
+        increaseTotalNodeNum();
+        calculateMaxEntriesPerNode();
         writeAlteredNodesToIndexFile();
     }
 
+    // Works
     public static void updateNode(Node node) {
         nodesInMemory.put(node.getIndexBlockLocation(), node);
         addAlteredNode(node.getIndexBlockLocation());
     }
 
+    // Works
     public static void increaseTotalLevelNum() {
         metaDataNode.increaseTotalLevelNum();
     }
 
+    // Works
     public static void increaseTotalNodeNum() {
         metaDataNode.increaseTotalNodesNum();
     }
 
+    // Works
     public static int addNewNode(Node node, boolean isRoot) {
         int nodeLocation;
         if (isRoot) {
             nodeLocation = RStarTree.ROOT_LOCATION_IN_INDEX_FILE;
         } else {
+            increaseTotalNodeNum();
             nodeLocation = metaDataNode.getTotalNodesNum();
         }
         node.setIndexBlockLocation(nodeLocation);
@@ -77,24 +83,34 @@ public class DataHandler {
         return nodeLocation;
     }
 
+    // Works
     private static void createRoot() {
-        Node root = new Node(1,1);
-        nodesInMemory.put(root.getIndexBlockLocation(), root);
-        addAlteredNode(root.getIndexBlockLocation());
+        Node root = new Node(RStarTree.ROOT_LOCATION_IN_INDEX_FILE, RStarTree.LEAF_LEVEL);
+        addNewNode(root, true);
     }
 
+    // Works
     public static void initialiseDataFile() {
         if (new File(PATH_TO_DATAFILE).exists()) {
             metaDataBlock = readMetaDataBlock();
             return;
         }
         createDataFile();
+        readRecordsFromCSV();
+        writeAlteredBlocksToDataFile();
     }
+
     // Works
     private static void createDataFile() {
-        metaDataBlock = new MetaDataBlock();
+        metaDataBlock = new MetaDataBlock(askForDimensions());
         createNewDataBlock();
-        writeAlteredBlocksToDataFile();
+    }
+
+    // Works
+    private static int askForDimensions() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the number of dimensions: ");
+        return scanner.nextInt();
     }
 
     // Works
@@ -114,10 +130,12 @@ public class DataHandler {
         return (index % 1000);
     }
 
+    // Works
     public static int calculateDataFileLocationOfRecord(int block, int slot) {
         return block * 1000 + slot; // ΠΡΟΣΟΧΗ: Το πρώτο slot ενός block έχει τιμή "0" οχι 1""
     }
 
+    // Works
     private static boolean blockInMemory(int blockNum) {
         return dataBlocksInMemory.get(blockNum) != null;
     }
@@ -150,21 +168,25 @@ public class DataHandler {
         return is.readObject();
     }
 
+    public static int getTotalRecords() {
+        return metaDataBlock.getTotalSlotsNum();
+    }
+
     public static int getMaxEntriesPerBlock() {
         return metaDataBlock.getMaxRecordsPerBlock();
     }
 
     // Works
-    private static void calculateMaxNumOfRecordsInBlock() {
+    public static int calculateMaxRecordsPerBlock(int dimensions) {
+
         ArrayList<Record> records = new ArrayList<>();
         int maxNumOfRecordsPerBlock = 0;
-
 
 
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
 
             ArrayList<Double> coordinates = new ArrayList<>();
-            for (int j = 0; j < currentDimensions; j++) {
+            for (int j = 0; j < dimensions; j++) {
                 coordinates.add(0.0);
             }
 
@@ -172,8 +194,6 @@ public class DataHandler {
 
             records.add(record);
             DataBlock dataBlock = new DataBlock(1, records);
-
-
             byte[] dataBlockInBytes = new byte[0];
             try {
                 dataBlockInBytes = serialize(dataBlock);
@@ -186,18 +206,17 @@ public class DataHandler {
 
             maxNumOfRecordsPerBlock++;
         }
-        metaDataBlock.setMaxRecordsPerBlock(maxNumOfRecordsPerBlock);
+        return maxNumOfRecordsPerBlock;
     }
 
-    private static void calculateEntriesPerNode() {
-
-
+    // Works (probably)
+    private static void calculateMaxEntriesPerNode() {
         ArrayList<Entry> entries = new ArrayList<>();
         int maxNumOfEntriesPerNode = 0;
 
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
             ArrayList<Bounds> bounds = new ArrayList<>();
-            for (int j = 0; j < currentDimensions; j++) {
+            for (int j = 0; j < getCurrentDimensions(); j++) {
                 bounds.add(new Bounds(0.0, 0.0));
             }
 
@@ -222,6 +241,7 @@ public class DataHandler {
         metaDataNode.setNodeMaxEntriesNum(maxNumOfEntriesPerNode);
     }
 
+    // Works
     public static void readRecordsFromCSV() {
         try (BufferedReader reader = new BufferedReader(new FileReader(PATH_TO_CSV))) {
             String line;
@@ -237,12 +257,14 @@ public class DataHandler {
         }
     }
 
+    // Works
     private static void insertToDataFile(String line) {
         int slotLocationForInsertion = findSlotToInsert();
         readyDataBlockForInsertion(slotLocationForInsertion);
         insertRecord(new Record(line.split(",")), slotLocationForInsertion);
     }
 
+    // Works
     private static void readyDataBlockForInsertion(int slotLocationForInsertion) {
         int blockForInsertion;
         if (slotLocationForInsertion < 1000) {
@@ -276,6 +298,7 @@ public class DataHandler {
         return totalBlocksNum;
     }
 
+    // Works
     private static void insertRecord(Record record, int slotForInsertion) {
         if (slotForInsertion < 1000) {
             dataBlocksInMemory.get(slotForInsertion).addRecord(record);
@@ -296,6 +319,7 @@ public class DataHandler {
         metaDataBlock.addAlteredBlock(id);
     }
 
+    // Works
     private static MetaDataNode readMetaDataNode() {
         MetaDataNode metaDataNode = null;
         byte[] byteDataNode = new byte[BLOCK_SIZE];
@@ -321,6 +345,7 @@ public class DataHandler {
         return metaDataBlock;
     }
 
+    // Works
     private static void writeMetaDataNodeToIndexFile() {
         try (RandomAccessFile raf = new RandomAccessFile(PATH_TO_INDEX_FILE, "rws")) {
             byte[] byteDataNode = new byte[BLOCK_SIZE];
@@ -396,8 +421,8 @@ public class DataHandler {
     public static void writeAlteredNodesToIndexFile() {
         writeMetaDataNodeToIndexFile();
         int alteredNodesNum = metaDataNode.getAlteredNodesNum();
-        for (int i = 1; i < alteredNodesNum; i++) {
-            int alteredBlock = metaDataBlock.getMinAlteredBlock();
+        for (int i = 0; i < alteredNodesNum; i++) {
+            int alteredBlock = metaDataNode.getMinAlteredNode();
             Node node = nodesInMemory.get(alteredBlock);
             writeNodeToIndexFile(node, alteredBlock);
         }
@@ -418,46 +443,77 @@ public class DataHandler {
         dataBlocksInMemory.put(dataBlock.getId(), dataBlock);
     }
 
-    public static void main(String[] args){
-        initialiseDataFile();
-        calculateMaxNumOfRecordsInBlock();
-        readRecordsFromCSV();
-        System.out.println("Max Records: " + metaDataBlock.getMaxRecordsPerBlock());
-        System.out.println("Total Slots: " + metaDataBlock.getTotalSlotsNum());
-        System.out.println("Total Blocks: " + metaDataBlock.getTotalBlockNum());
-        System.out.println("Slot to insert: " + findSlotToInsert());
-        calculateEntriesPerNode();
-        System.out.println("Max num of entries: " + metaDataNode.getMaxEntriesNum());
-        System.out.println("Min num of entries: " + metaDataNode.getMinEntriesNum());
+
+    public static void main(String[] args) {
+        System.out.println(askForDimensions());
+//        initialiseDataFile();
+//        RStarTree rStarTree = new RStarTree();
+//        initialiseIndexFile();
+//        setCurrentDimensions(1);
+//        calculateEntriesPerNode();
+//        System.out.println(metaDataNode.getMaxEntriesNum());
+//        System.out.println(metaDataNode.getMinEntriesNum());
+//        System.out.println(metaDataNode.getTotalNodesNum());
+//        System.out.println(metaDataNode.getTotalLevelNum());
+//        int num = 5;
+//        ArrayList<LeafEntry> entries = tempGetEntries(num);
+//        for (int i=0; i < num; i++) {
+//            rStarTree.insertData(entries.get(i));
+//        }
+//        System.out.println(DataHandler.getNodeFromIndexFile(1).getEntries().size());
+//        System.out.println(DataHandler.getNodeFromIndexFile(4));
+//        for (Entry entry : DataHandler.getNodeFromIndexFile(1).getEntries()) {
+//            NonLeafEntry entry1 = (NonLeafEntry) entry;
+//            System.out.println("Entry child " + entry1.getChildPTR());
+//        }
+
+
+//        loadIndexNode(1);
+//        System.out.println(isNodeInMemory(1));
+
+
+//        calculateMaxNumOfRecordsInBlock();
+//        readRecordsFromCSV();
+//        System.out.println("Max Records: " + metaDataBlock.getMaxRecordsPerBlock());
+//        System.out.println("Total Slots: " + metaDataBlock.getTotalSlotsNum());
+//        System.out.println("Total Blocks: " + metaDataBlock.getTotalBlockNum());
+//        System.out.println("Slot to insert: " + findSlotToInsert());
+//        calculateEntriesPerNode();
+//        System.out.println("Max num of entries: " + metaDataNode.getMaxEntriesNum());
+//        System.out.println("Min num of entries: " + metaDataNode.getMinEntriesNum());
 //        createNewDataBlock();
 //        loadDataBlock(997);
 //        readyDataBlockForInsertion(1);
 //        insertRecord(new Record(-1, "name", new ArrayList<Double>()), 1);
 //        System.out.println("Data Block Id: " + dataBlocksInMemory.get(997).getRecord(1).getId());
 
-        writeAlteredBlocksToDataFile();
+//        writeAlteredBlocksToDataFile();
+
+//        writeAlteredNodesToIndexFile();
     }
 
     public static Record getRecordFromDataFile(int recordLocation) {
         int blockNum = findBlockOfRecord(recordLocation);
         int slotNum = findSlotOfRecord(recordLocation);
 
-        if(!dataBlocksInMemory.containsKey(blockNum)) {
+        if (!dataBlocksInMemory.containsKey(blockNum)) {
             loadDataBlock(blockNum);
         }
 
         return dataBlocksInMemory.get(blockNum).getRecord(slotNum);
     }
 
-    public static Node getNodeFromIndexFile(int index){
+    // Works
+    public static Node getNodeFromIndexFile(int index) {
         if (!nodesInMemory.containsKey(index)) {
             loadIndexNode(index);
         }
         return nodesInMemory.get(index);
     }
 
+    // Works
     public static DataBlock getDataBlock(int i) {
-        if(!dataBlocksInMemory.containsKey(i)) {
+        if (!dataBlocksInMemory.containsKey(i)) {
             loadDataBlock(i);
         }
         return dataBlocksInMemory.get(i);
@@ -468,7 +524,7 @@ public class DataHandler {
     }
 
     public static int getCurrentDimensions() {
-        return currentDimensions;
+        return metaDataBlock.getCurrentDimensions();
     }
 
     public static int getMaxEntriesPerNode() {
@@ -476,6 +532,6 @@ public class DataHandler {
     }
 
     public static int getMinEntriesPerNode() {
-        return metaDataNode.getMaxEntriesNum();
+        return metaDataNode.getMinEntriesNum();
     }
 }

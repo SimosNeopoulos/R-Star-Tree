@@ -33,6 +33,7 @@ public class EntriesCalculator {
         return new BoundingRectangle(boundaries);
     }
 
+    // Works
     public static BoundingRectangle getNewMinBoundingRectangle(BoundingRectangle boundingRectangle, Entry entry) {
         ArrayList<Double> minBounds = new ArrayList<>();
         ArrayList<Double> maxBounds = new ArrayList<>();
@@ -47,7 +48,7 @@ public class EntriesCalculator {
 
         for (int i = 0; i < dimensionNum; i++) {
             minBounds.set(i, Math.min(entryBounds.get(i).getLowerBound(), oldBoundingRectangleBounds.get(i).getLowerBound()));
-            maxBounds.set(i, Math.min(entryBounds.get(i).getUpperBound(), oldBoundingRectangleBounds.get(i).getUpperBound()));
+            maxBounds.set(i, Math.max(entryBounds.get(i).getUpperBound(), oldBoundingRectangleBounds.get(i).getUpperBound()));
         }
 
         ArrayList<Bounds> boundaries = new ArrayList<>();

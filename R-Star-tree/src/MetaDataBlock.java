@@ -4,14 +4,17 @@ public class MetaDataBlock implements Serializable {
     private int id;
     private int totalBlockNum;
     private int totalSlotsNum;
+    private int currentDimensions;
     private PriorityDeQueue freeSlots;
     private PriorityDeQueue alteredBlocks;
     private int maxRecordsPerBlock;
 
-    public MetaDataBlock() {
+    public MetaDataBlock(int dimensionsNum) {
         this.id = 0;
         this.totalBlockNum = 0;
         this.totalSlotsNum = 0;
+        this.currentDimensions = dimensionsNum;
+        this.maxRecordsPerBlock = DataHandler.calculateMaxRecordsPerBlock(dimensionsNum);
         this.freeSlots = new PriorityDeQueue();
         this.alteredBlocks = new PriorityDeQueue();
     }
@@ -73,6 +76,10 @@ public class MetaDataBlock implements Serializable {
 
     public int getValidSlotNum() {
         return totalSlotsNum - freeSlots.getSize();
+    }
+
+    public int getCurrentDimensions() {
+        return currentDimensions;
     }
 
     public PriorityDeQueue getFreeSlots() {
