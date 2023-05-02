@@ -169,6 +169,14 @@ public class EntriesCalculator {
         return entries;
     }
 
+    public static ArrayList<LeafEntry> getLeafEntriesFromEntryComparator(ArrayList<EntryComparator> comparatorEntries) {
+        ArrayList<LeafEntry> entries = new ArrayList<>();
+        for (EntryComparator comparatorEntry : comparatorEntries) {
+            entries.add((LeafEntry) comparatorEntry.getEntry());
+        }
+        return entries;
+    }
+
     public static boolean checkOverlap(BoundingRectangle boundingRectangleA, BoundingRectangle boundingRectangleB) {
         // For every dimension find the intersection point
         for (int i = 0; i < DataHandler.getCurrentDimensions(); i++) {
