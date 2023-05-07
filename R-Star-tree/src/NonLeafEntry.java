@@ -23,8 +23,12 @@ public class NonLeafEntry implements Serializable, Entry  {
         return childPTR;
     }
 
+    public void reAdjustBoundingRectangle() {
+        this.boundingRectangle = EntriesCalculator.getMinimumBoundingRectangleForEntries(DataHandler.getNodeFromIndexFile(childPTR).getEntries());
+    }
+
     public void reAdjustBoundingRectangle(ArrayList<Entry> entries) {
-        boundingRectangle = EntriesCalculator.getMinimumBoundingRectangleForEntries(entries);
+        this.boundingRectangle = EntriesCalculator.getMinimumBoundingRectangleForEntries(entries);
     }
 
     public void reAdjustBoundingRectangle(Entry entry) {

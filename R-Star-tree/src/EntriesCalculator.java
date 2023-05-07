@@ -177,6 +177,28 @@ public class EntriesCalculator {
         return entries;
     }
 
+    public static double calculateMinDistanceFromPoint(BoundingRectangle boundingRectangle, BoundingRectangle point) {
+        double minDistance = 0;
+
+        for (int i = 0; i < DataHandler.getCurrentDimensions(); i++) {
+            double pi = point.getBoundsOfDimension(i).getLowerBound();
+            Bounds currentBound = boundingRectangle.getBoundsOfDimension(i);
+            double ri;
+
+            if(currentBound.getLowerBound() > pi) {
+                ri = currentBound.getLowerBound();
+            } else if (currentBound.getUpperBound() < pi) {
+                ri = currentBound.getUpperBound();
+            } else {
+                ri = pi;
+            }
+
+            minDistance += Math.pow(pi - ri, 2);
+        }
+
+        return minDistance;
+    }
+
     public static boolean checkOverlap(BoundingRectangle boundingRectangleA, BoundingRectangle boundingRectangleB) {
         // For every dimension find the intersection point
         for (int i = 0; i < DataHandler.getCurrentDimensions(); i++) {

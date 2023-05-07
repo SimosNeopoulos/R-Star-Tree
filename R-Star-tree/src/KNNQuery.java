@@ -30,7 +30,53 @@ public class KNNQuery {
         return EntriesCalculator.getLeafEntriesFromEntryComparator(knnComparatorList);
     }
 
-    private void kNNQuery(Node node) {
-
+    private ArrayList<EntryComparator> getSortedEntriesForKNN(Node node) {
+        ArrayList<EntryComparator> entries = getComparedEntriesFromNode(node);
+        entries.sort(new EntryComparator(0.0, null));
+        return entries;
     }
+
+    private ArrayList<EntryComparator> getComparedEntriesFromNode(Node node) {
+        ArrayList<Entry> entries = node.getEntries();
+        ArrayList<EntryComparator> comparedEntries = new ArrayList<>();
+
+        for (Entry entry : entries) {
+            double distance = EntriesCalculator.calculateMinDistanceFromPoint(entry.getBoundingRectangle(), point);
+            comparedEntries.add(new EntryComparator(distance, entry));
+        }
+
+        return comparedEntries;
+    }
+
+    private void kNNQuery(Node node) {
+        ArrayList<EntryComparator> entries = getSortedEntriesForKNN(node);
+
+        if (!node.isLeaf()) {
+            for (EntryComparator entry : entries) {
+                if (entry.getValueToCompare() > this.searchRadius) {
+                    break;
+                }
+                NonLeafEntry nonLeafEntry = (NonLeafEntry) entry.getEntry();
+                kNNQuery(DataHandler.getNodeFromIndexFile(nonLeafEntry.getChildPTR()));
+            }
+        } else {
+            for (EntryComparator entry : entries) {
+                if (entry.getValueToCompare() > this.searchRadius) {
+                    continue;
+                }
+                this.kNNs.add(entry);
+
+                if (this.kNNs.size() > k) {
+                    this.kNNs.poll();
+                }
+
+                if (this.kNNs.size() == k) {
+                    this.searchRadius = this.kNNs.peek().getValueToCompare();
+                }
+
+            }
+        }
+    }
+
+
 }

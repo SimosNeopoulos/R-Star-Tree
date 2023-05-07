@@ -47,6 +47,21 @@ public class RStarTree {
         insert(leafEntry, LEAF_LEVEL, null, null);
     }
 
+    private Entry delete(Entry entryToDelete, Node parentNode, NonLeafEntry parentEntry) {
+        Node childNode;
+
+        if(parentEntry == null) {
+            childNode = getRoot();
+        } else {
+            childNode = DataHandler.getNodeFromIndexFile(parentEntry.getChildPTR());
+        }
+
+
+
+
+        return null;
+    }
+
     private Entry insert(Entry entryToInsert, int levelToInsert, Node parentNode, NonLeafEntry parentEntry) {
         Node childNode;
 
@@ -62,7 +77,7 @@ public class RStarTree {
             childNode.addEntry(entryToInsert);
             DataHandler.updateNode(childNode);
         } else {
-            NonLeafEntry bestParentEntry = chooseLeaf(childNode, entryToInsert);
+            NonLeafEntry bestParentEntry = chooseSubTree(childNode, entryToInsert);
             Entry newSearchEntry = insert(entryToInsert, levelToInsert, childNode, bestParentEntry);
 
             if (newSearchEntry != null) {
@@ -81,7 +96,7 @@ public class RStarTree {
         return null;
     }
 
-    private NonLeafEntry chooseLeaf(Node node, Entry entryToInsert) {
+    private NonLeafEntry chooseSubTree(Node node, Entry entryToInsert) {
         ArrayList<Entry> entries = node.getEntries();
         int bestParentEntryIndex = 0;
         int minAreaDifference = Integer.MAX_VALUE;
