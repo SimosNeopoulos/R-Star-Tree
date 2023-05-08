@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.PriorityQueue;
 
 public class KNNQuery {
@@ -20,12 +19,11 @@ public class KNNQuery {
         return getEntriesFromPriorityQueue();
     }
 
-    public ArrayList<LeafEntry> getEntriesFromPriorityQueue() {
+    private ArrayList<LeafEntry> getEntriesFromPriorityQueue() {
         ArrayList<EntryComparator> knnComparatorList = new ArrayList<>();
         while (!this.kNNs.isEmpty()) {
             knnComparatorList.add(kNNs.poll());
         }
-        Collections.reverse(knnComparatorList);
 
         return EntriesCalculator.getLeafEntriesFromEntryComparator(knnComparatorList);
     }
@@ -71,7 +69,9 @@ public class KNNQuery {
                 }
 
                 if (this.kNNs.size() == k) {
-                    this.searchRadius = this.kNNs.peek().getValueToCompare();
+                    if (this.kNNs.peek() != null) {
+                        this.searchRadius = this.kNNs.peek().getValueToCompare();
+                    }
                 }
 
             }
