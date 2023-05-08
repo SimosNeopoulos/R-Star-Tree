@@ -36,16 +36,4 @@ public class PriorityDeQueue implements Serializable {
         set.remove(min);
         return min;
     }
-
-//    public static void main(String[] args) {
-//        AvailableSlotForRecords freeSlots = new AvailableSlotForRecords();
-//         freeSlots.add(1021);
-//         freeSlots.add(1000);
-//         freeSlots.add(1025);
-//         freeSlots.add(1022);
-//         for(int i=0; i<5; i++) {
-//             System.out.println(freeSlots.getLocationForEntryInsertion());
-//             System.out.println(freeSlots.getSet());
-//         }
-//    }
 }

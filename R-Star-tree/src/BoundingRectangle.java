@@ -31,7 +31,6 @@ public class BoundingRectangle implements Serializable {
 
     private void calculateCenter() {
         center = new ArrayList<>();
-
         for (int i = 0; i < DataHandler.getCurrentDimensions(); i++) {
             Bounds currentBound = boundaries.get(i);
             center.add((currentBound.getUpperBound() + currentBound.getLowerBound()) / 2);

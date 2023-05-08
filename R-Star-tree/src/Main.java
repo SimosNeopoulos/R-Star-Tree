@@ -1,4 +1,3 @@
-import javax.xml.crypto.Data;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -38,16 +37,33 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        DataHandler.initialiseDataFile();
-        System.out.println(DataHandler.getDataBlock(15).getRecordSize());
-        System.out.println("Total Block num: " + DataHandler.getTotalBlockNum());
-        System.out.println("Total records: " + DataHandler.getTotalRecords());
-        System.out.println("Max Records per Block: " + DataHandler.getMaxEntriesPerBlock());
+//        DataHandler.initialiseIndexFile();
+        Bounds bounds = new Bounds(1,1);
+        ArrayList<Bounds> boundingRectangles = new ArrayList<>();
+        boundingRectangles.add(bounds);
+        BoundingRectangle boundingRectangle = new BoundingRectangle(boundingRectangles);
         RStarTree rStarTree = new RStarTree();
-        System.out.println(rStarTree.getTotalLevelNum());
-        Node root = rStarTree.getRoot();
-        Main main = new Main();
-        main.numOfLeafEntries(root);
-        System.out.println(main.numOfEntries);
+
+        ArrayList<LeafEntry> entries = tempGetEntries(5);
+        for (LeafEntry entry: entries) {
+            rStarTree.insertData(entry);
+        }
+
+        ArrayList<LeafEntry> queryEntries = rStarTree.kNNQuery(5, boundingRectangle);
+        for (LeafEntry leafEntry: queryEntries) {
+            System.out.println("Entry id: " + leafEntry.getObjectId());
+            rStarTree.deleteData(leafEntry);
+            System.out.println("Total level num of RTree: " + rStarTree.getTotalLevelNum());
+            Node root = rStarTree.getRoot();
+            Main main = new Main();
+            main.numOfLeafEntries(root);
+            System.out.println("Num of Entries: " + main.numOfEntries);
+            System.out.println("Num of nodes in RTree: " + DataHandler.gettotalNodesInIndex());
+            System.out.println();
+        }
+
+
+
+
     }
 }

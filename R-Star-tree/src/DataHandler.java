@@ -17,6 +17,10 @@ public class DataHandler {
         return nodesInMemory.containsKey(nodeIndex);
     }
 
+    public static int gettotalNodesInIndex() {
+        return metaDataNode.getTotalNodesNum();
+    }
+
     public static int getPReInsertNum() {
         return metaDataNode.getReInsertPEntries();
     }
@@ -152,7 +156,6 @@ public class DataHandler {
             maxNumOfEntriesPerNode++;
 
         }
-
         metaDataNode.setNodeMaxEntriesNum(maxNumOfEntriesPerNode);
     }
 
@@ -376,7 +379,7 @@ public class DataHandler {
         int totalSlotsNum = metaDataBlock.getTotalSlotsNum();
         int maxSlotsPerBlockNum = metaDataBlock.getMaxRecordsPerBlock();
 
-        if (totalBlocksNum < (float) ((totalSlotsNum + 1) / maxSlotsPerBlockNum)) {
+        if (totalBlocksNum < ((float) (totalSlotsNum + 1) / (float) maxSlotsPerBlockNum)) {
             return totalBlocksNum + 1;
         }
         return totalBlocksNum;
@@ -456,8 +459,6 @@ public class DataHandler {
     private static void writeBlockToDataFile(DataBlock dataBlock, int blockNum) {
         try (RandomAccessFile f = new RandomAccessFile(PATH_TO_DATAFILE, "rw")) {
             byte[] dataBlockInBytes = serialize(dataBlock);
-            //TODO: For test
-            System.out.println("Num of records in block " + blockNum + ": " + dataBlock.getRecordSize());
             byte[] block = new byte[BLOCK_SIZE];
             System.arraycopy(dataBlockInBytes, 0, block, 0, dataBlockInBytes.length);
             f.seek((long) blockNum * BLOCK_SIZE);
@@ -514,6 +515,7 @@ public class DataHandler {
         return metaDataBlock.getTotalBlockNum();
     }
 
+    //TODO: Να το αλλαξω μετα τα tetst
     public static int getCurrentDimensions() {
         return metaDataBlock.getCurrentDimensions();
     }

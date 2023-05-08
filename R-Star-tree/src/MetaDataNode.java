@@ -54,10 +54,10 @@ public class MetaDataNode implements Serializable {
         return nodeMaxEntriesNum;
     }
 
-    public void setNodeMaxEntriesNum(int nodeMaxEntriesNum) {
-        this.nodeMaxEntriesNum = nodeMaxEntriesNum;
+    public void setNodeMaxEntriesNum(int maxEntriesNum) {
+        this.nodeMaxEntriesNum = maxEntriesNum;
         this.nodeMinEntriesNum = (int) (0.4 * nodeMaxEntriesNum);
-        this.reInsertPEntries = (int) (0.4 * nodeMaxEntriesNum); // TODO: Να κανω το 0.4 σε 0.3 οταν τελειωσω με τα tests
+        this.reInsertPEntries = (int) (0.4 * nodeMaxEntriesNum);
     }
 
     public int getTotalNodesNum() {
