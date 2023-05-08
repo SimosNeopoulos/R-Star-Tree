@@ -124,21 +124,85 @@ public class DataHandler {
         addNewNode(root, true);
     }
 
-    // Works
-    public static void initialiseDataFile() {
-        if (new File(PATH_TO_DATAFILE).exists()) {
-            metaDataBlock = readMetaDataBlock();
-            return;
+    // Works (probably)
+    private static void calculateMaxEntriesPerNode() {
+        ArrayList<Entry> entries = new ArrayList<>();
+        int maxNumOfEntriesPerNode = 0;
+
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            ArrayList<Bounds> bounds = new ArrayList<>();
+            for (int j = 0; j < getCurrentDimensions(); j++) {
+                bounds.add(new Bounds(0.0, 0.0));
+            }
+
+            Entry entry = new LeafEntry(new BoundingRectangle(bounds), 1, 1111);
+            entries.add(entry);
+            Node node = new Node(entries, 1, 1);
+
+            byte[] nodeInBytes = new byte[0];
+            try {
+                nodeInBytes = serialize(node);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (nodeInBytes.length > BLOCK_SIZE)
+                break;
+
+            maxNumOfEntriesPerNode++;
+
         }
-        createDataFile();
-        readRecordsFromCSV();
-        writeAlteredBlocksToDataFile();
+
+        metaDataNode.setNodeMaxEntriesNum(maxNumOfEntriesPerNode);
     }
 
     // Works
-    private static void createDataFile() {
-        metaDataBlock = new MetaDataBlock(askForDimensions());
-        createNewDataBlock();
+    private static void writeMetaDataNodeToIndexFile() {
+        try (RandomAccessFile raf = new RandomAccessFile(PATH_TO_INDEX_FILE, "rws")) {
+            byte[] byteDataNode = new byte[BLOCK_SIZE];
+            byte[] serializedBlock = serialize(metaDataNode);
+            System.arraycopy(serializedBlock, 0, byteDataNode, 0, serializedBlock.length);
+            raf.write(byteDataNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void writeNodeToIndexFile(Node node, int blockNum) {
+        try (RandomAccessFile f = new RandomAccessFile(PATH_TO_INDEX_FILE, "rw")) {
+            byte[] nodeInBytes = serialize(node);
+            byte[] block = new byte[BLOCK_SIZE];
+            System.arraycopy(nodeInBytes, 0, block, 0, nodeInBytes.length);
+            f.seek((long) blockNum * BLOCK_SIZE);
+            f.write(block);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void loadIndexNode(int blockNum) {
+        byte[] byteNode = new byte[BLOCK_SIZE];
+        Node node = null;
+        try (RandomAccessFile f = new RandomAccessFile(PATH_TO_INDEX_FILE, "rw")) {
+            f.seek((long) blockNum * BLOCK_SIZE);
+            f.read(byteNode, 0, BLOCK_SIZE);
+            node = (Node) deserialize(byteNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (null != node) {
+            nodesInMemory.put(node.getIndexBlockLocation(), node);
+        }
+    }
+
+    public static void writeAlteredNodesToIndexFile() {
+        writeMetaDataNodeToIndexFile();
+        int alteredNodesNum = metaDataNode.getAlteredNodesNum();
+        for (int i = 0; i < alteredNodesNum; i++) {
+            int alteredBlock = metaDataNode.getMinAlteredNode();
+            Node node = nodesInMemory.get(alteredBlock);
+            writeNodeToIndexFile(node, alteredBlock);
+        }
     }
 
     // Works
@@ -207,8 +271,25 @@ public class DataHandler {
         return metaDataBlock.getTotalSlotsNum();
     }
 
-    public static int getMaxEntriesPerBlock() {
+    public static int getMaxRecordsPerBlock() {
         return metaDataBlock.getMaxRecordsPerBlock();
+    }
+
+    // Works
+    public static void initialiseDataFile() {
+        if (new File(PATH_TO_DATAFILE).exists()) {
+            metaDataBlock = readMetaDataBlock();
+            return;
+        }
+        createDataFile();
+        readRecordsFromCSV();
+        writeAlteredBlocksToDataFile();
+    }
+
+    // Works
+    private static void createDataFile() {
+        metaDataBlock = new MetaDataBlock(askForDimensions());
+        createNewDataBlock();
     }
 
     // Works
@@ -242,38 +323,6 @@ public class DataHandler {
             maxNumOfRecordsPerBlock++;
         }
         return maxNumOfRecordsPerBlock;
-    }
-
-    // Works (probably)
-    private static void calculateMaxEntriesPerNode() {
-        ArrayList<Entry> entries = new ArrayList<>();
-        int maxNumOfEntriesPerNode = 0;
-
-        for (int i = 0; i < Integer.MAX_VALUE; i++) {
-            ArrayList<Bounds> bounds = new ArrayList<>();
-            for (int j = 0; j < getCurrentDimensions(); j++) {
-                bounds.add(new Bounds(0.0, 0.0));
-            }
-
-            Entry entry = new LeafEntry(new BoundingRectangle(bounds), 1, 1111);
-            entries.add(entry);
-            Node node = new Node(entries, 1, 1);
-
-            byte[] nodeInBytes = new byte[0];
-            try {
-                nodeInBytes = serialize(node);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            if (nodeInBytes.length > BLOCK_SIZE)
-                break;
-
-            maxNumOfEntriesPerNode++;
-
-        }
-
-        metaDataNode.setNodeMaxEntriesNum(maxNumOfEntriesPerNode);
     }
 
     // Works
@@ -327,7 +376,7 @@ public class DataHandler {
         int totalSlotsNum = metaDataBlock.getTotalSlotsNum();
         int maxSlotsPerBlockNum = metaDataBlock.getMaxRecordsPerBlock();
 
-        if (totalBlocksNum < ((totalSlotsNum + 1) / maxSlotsPerBlockNum)) {
+        if (totalBlocksNum < (float) ((totalSlotsNum + 1) / maxSlotsPerBlockNum)) {
             return totalBlocksNum + 1;
         }
         return totalBlocksNum;
@@ -381,18 +430,6 @@ public class DataHandler {
     }
 
     // Works
-    private static void writeMetaDataNodeToIndexFile() {
-        try (RandomAccessFile raf = new RandomAccessFile(PATH_TO_INDEX_FILE, "rws")) {
-            byte[] byteDataNode = new byte[BLOCK_SIZE];
-            byte[] serializedBlock = serialize(metaDataNode);
-            System.arraycopy(serializedBlock, 0, byteDataNode, 0, serializedBlock.length);
-            raf.write(byteDataNode);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Works
     private static void writeMetaDataBlockToDataFile() {
         try (RandomAccessFile raf = new RandomAccessFile(PATH_TO_DATAFILE, "rws")) {
             byte[] byteDataBlock = new byte[BLOCK_SIZE];
@@ -419,49 +456,14 @@ public class DataHandler {
     private static void writeBlockToDataFile(DataBlock dataBlock, int blockNum) {
         try (RandomAccessFile f = new RandomAccessFile(PATH_TO_DATAFILE, "rw")) {
             byte[] dataBlockInBytes = serialize(dataBlock);
+            //TODO: For test
+            System.out.println("Num of records in block " + blockNum + ": " + dataBlock.getRecordSize());
             byte[] block = new byte[BLOCK_SIZE];
             System.arraycopy(dataBlockInBytes, 0, block, 0, dataBlockInBytes.length);
             f.seek((long) blockNum * BLOCK_SIZE);
             f.write(block);
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private static void writeNodeToIndexFile(Node node, int blockNum) {
-        try (RandomAccessFile f = new RandomAccessFile(PATH_TO_INDEX_FILE, "rw")) {
-            byte[] nodeInBytes = serialize(node);
-            byte[] block = new byte[BLOCK_SIZE];
-            System.arraycopy(nodeInBytes, 0, block, 0, nodeInBytes.length);
-            f.seek((long) blockNum * BLOCK_SIZE);
-            f.write(block);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void loadIndexNode(int blockNum) {
-        byte[] byteNode = new byte[BLOCK_SIZE];
-        Node node = null;
-        try (RandomAccessFile f = new RandomAccessFile(PATH_TO_INDEX_FILE, "rw")) {
-            f.seek((long) blockNum * BLOCK_SIZE);
-            f.read(byteNode, 0, BLOCK_SIZE);
-            node = (Node) deserialize(byteNode);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (null != node) {
-            nodesInMemory.put(node.getIndexBlockLocation(), node);
-        }
-    }
-
-    public static void writeAlteredNodesToIndexFile() {
-        writeMetaDataNodeToIndexFile();
-        int alteredNodesNum = metaDataNode.getAlteredNodesNum();
-        for (int i = 0; i < alteredNodesNum; i++) {
-            int alteredBlock = metaDataNode.getMinAlteredNode();
-            Node node = nodesInMemory.get(alteredBlock);
-            writeNodeToIndexFile(node, alteredBlock);
         }
     }
 
