@@ -1,9 +1,11 @@
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
 
 public class RStarTree {
     private HashSet<Integer> levelsVisited;
+    private PriorityQueue<DeletedNode> deletedNodes;
     public static final int ROOT_LOCATION_IN_INDEX_FILE = 1;
     public static final int LEAF_LEVEL = 1;
     public int numOfInsertsTest;
@@ -47,18 +49,96 @@ public class RStarTree {
         insert(leafEntry, LEAF_LEVEL, null, null);
     }
 
-    private Entry delete(Entry entryToDelete, Node parentNode, NonLeafEntry parentEntry) {
+    public void deleteData(Entry entryToDelete) {
+        deletedNodes = new PriorityQueue<>();
+        delete(entryToDelete, null, null);
+        reInsertDeletedEntries();
+    }
+
+    private NonLeafEntry delete(Entry entryToDelete, Node parentNode, NonLeafEntry parentEntry) {
         Node childNode;
 
-        if(parentEntry == null) {
+        if (parentEntry == null) {
             childNode = getRoot();
         } else {
             childNode = DataHandler.getNodeFromIndexFile(parentEntry.getChildPTR());
         }
 
+        if (childNode.isLeaf()) {
+            int entryToDeleteLocation = RStarTree.getIndexForEntryToDelete(entryToDelete, childNode);
+            if (entryToDeleteLocation == -1)
+                throw new IllegalStateException("Entry for deletion not found");
+            LeafEntry leafEntry = (LeafEntry) childNode.getEntries().get(entryToDeleteLocation);
+            DataHandler.deleteSlot(leafEntry.getDataFileLocation());
+            childNode.removeEntry(entryToDeleteLocation);
+        } else {
+            // TODO: Το newParentEntry και το newDeleteEntry είναι πιθανός το ίδιο πράγμα
+            NonLeafEntry newParentEntry = findLeaf(entryToDelete, childNode);
+            NonLeafEntry newDeleteEntry = delete(entryToDelete, childNode, newParentEntry);
+
+            if (newDeleteEntry != null) {
+                if (!childNode.removeEntry(newDeleteEntry))
+                    throw new IllegalStateException("Entry for deletion not found");
+            }
+        }
+
+        if (childNode.getEntries().size() <= DataHandler.getMinEntriesPerNode()) {
+            return condenseTree(parentNode, parentEntry, childNode);
+        } else if (parentEntry != null){
+            parentEntry.reAdjustBoundingRectangle();
+        }
+
+        return null;
+    }
 
 
+    //TODO: Να δω αν χρειάζεται να κάνω delete τα nodes απο το indexfile ή απλά να τα αφήνω εκεί
+    private NonLeafEntry condenseTree(Node parentNode, NonLeafEntry parentEntry, Node childNode) {
 
+        if (childNode.isRoot()) {
+            if (childNode.getEntries().size() == 1 && !childNode.isLeaf()) {
+                NonLeafEntry lastRootEntry = (NonLeafEntry) childNode.getEntries().get(0);
+                Node newRoot = DataHandler.getNodeFromIndexFile(lastRootEntry.getChildPTR());
+                newRoot.setIndexBlockLocation(ROOT_LOCATION_IN_INDEX_FILE);
+                DataHandler.addEmptyIndexNode(lastRootEntry.getChildPTR());
+                DataHandler.updateNode(newRoot);
+                //TODO: Να δω τι θα κάνω με τις κενές θέσεις στο index file
+
+                DataHandler.decreaseTotalLevelNum();
+                DataHandler.decreaseTotalNodeNum();
+
+                return null;
+            }
+        } else {
+            deletedNodes.add(new DeletedNode(childNode.getTreeLevel(), childNode.getEntries()));
+            DataHandler.decreaseTotalNodeNum();
+            DataHandler.addEmptyIndexNode(childNode.getIndexBlockLocation());
+            //TODO: Εδω πρέπει να διαγράφω το node απο το αρχείο.
+
+            // TODO: Να δω αν το "-1" είναι σωστό
+            if (parentNode.getEntries().size() - 1 <= DataHandler.getMinEntriesPerNode()) {
+                return parentEntry;
+            }
+        }
+
+        return null;
+    }
+
+    private void reInsertDeletedEntries() {
+        while (!deletedNodes.isEmpty()) {
+            DeletedNode deletedNode = deletedNodes.poll();
+            for (Entry entry: deletedNode.getEntries()) {
+                insert(entry, deletedNode.getLevelToInsertEntries(), null, null);
+            }
+        }
+    }
+
+    private NonLeafEntry findLeaf(Entry entryToDelete, Node childNode) {
+        for (Entry entry : childNode.getEntries()) {
+            if (EntriesCalculator.checkOverlap(entryToDelete.getBoundingRectangle(), entry.getBoundingRectangle())) {
+                return (NonLeafEntry) entry;
+            }
+        }
         return null;
     }
 
@@ -176,5 +256,14 @@ public class RStarTree {
 
     public Node getRoot() {
         return DataHandler.getNodeFromIndexFile(ROOT_LOCATION_IN_INDEX_FILE);
+    }
+
+    private static int getIndexForEntryToDelete(Entry entry, Node node) {
+        for (int i = 0; i < node.getEntries().size(); i++) {
+            if (node.getEntries().get(i).equals(entry))
+                return i;
+        }
+
+        return -1;
     }
 }

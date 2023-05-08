@@ -31,6 +31,10 @@ public class Node implements Serializable {
         return treeLevel == RStarTree.LEAF_LEVEL;
     }
 
+    public boolean isRoot() {
+        return indexBlockLocation == RStarTree.ROOT_LOCATION_IN_INDEX_FILE;
+    }
+
     public ArrayList<Entry> getEntries() {
         return entries;
     }
@@ -45,6 +49,14 @@ public class Node implements Serializable {
 
     public void addEntry(Entry entry) {
         entries.add(entry);
+    }
+
+    public void removeEntry(int i) {
+        entries.remove(i);
+    }
+
+    public boolean removeEntry(Entry entry) {
+        return entries.remove(entry);
     }
 
     public void setTreeLevel(int treeLevel) {

@@ -9,8 +9,8 @@ public class DataHandler {
     private static final String PATH_TO_CSV = "nodes.csv";
     private static final int BLOCK_SIZE = 32 * 1024;
     private static MetaDataBlock metaDataBlock;
-    private static HashMap<Integer, DataBlock> dataBlocksInMemory = new HashMap<>();
-    private static HashMap<Integer, Node> nodesInMemory = new HashMap<>();
+    private static final HashMap<Integer, DataBlock> dataBlocksInMemory = new HashMap<>();
+    private static final HashMap<Integer, Node> nodesInMemory = new HashMap<>();
     private static MetaDataNode metaDataNode;
 
     private static boolean isNodeInMemory(int nodeIndex) {
@@ -49,6 +49,7 @@ public class DataHandler {
         metaDataNode = new MetaDataNode();
         createRoot();
         increaseTotalNodeNum();
+        increaseIndexFileLocationForNewNode();
         calculateMaxEntriesPerNode();
         writeAlteredNodesToIndexFile();
     }
@@ -65,8 +66,37 @@ public class DataHandler {
     }
 
     // Works
+    public static void decreaseTotalLevelNum() {
+        metaDataNode.decreaseTotalLevelNum();
+    }
+
+    // Works
     public static void increaseTotalNodeNum() {
         metaDataNode.increaseTotalNodesNum();
+    }
+
+    public static void decreaseTotalNodeNum() {
+        metaDataNode.decreaseTotalNodeNum();
+    }
+
+    public static int getIndexFileLocationForNewNode() {
+        return metaDataNode.getIndexFileLocationForNewNode();
+    }
+
+    public static void increaseIndexFileLocationForNewNode() {
+        metaDataNode.increaseIndexFileLocationForNewNode();
+    }
+
+    public static void addEmptyIndexNode(int locationInIndexFile) {
+        metaDataNode.addEmptyIndexNode(locationInIndexFile);
+    }
+
+    public static boolean emptyIndexNodeExists() {
+        return metaDataNode.emptyIndexNodeExists();
+    }
+
+    public static int getEmptyIndexLocation() {
+        return metaDataNode.getEmptyIndexLocation();
     }
 
     // Works
@@ -76,7 +106,12 @@ public class DataHandler {
             nodeLocation = RStarTree.ROOT_LOCATION_IN_INDEX_FILE;
         } else {
             increaseTotalNodeNum();
-            nodeLocation = metaDataNode.getTotalNodesNum();
+            if (DataHandler.emptyIndexNodeExists()) {
+                nodeLocation = getEmptyIndexLocation();
+            } else {
+                increaseIndexFileLocationForNewNode();
+                nodeLocation = getIndexFileLocationForNewNode();
+            }
         }
         node.setIndexBlockLocation(nodeLocation);
         updateNode(node);
@@ -415,7 +450,9 @@ public class DataHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        nodesInMemory.put(node.getIndexBlockLocation(), node);
+        if (null != node) {
+            nodesInMemory.put(node.getIndexBlockLocation(), node);
+        }
     }
 
     public static void writeAlteredNodesToIndexFile() {
@@ -439,7 +476,9 @@ public class DataHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        dataBlocksInMemory.put(dataBlock.getId(), dataBlock);
+        if (dataBlock != null) {
+            dataBlocksInMemory.put(dataBlock.getId(), dataBlock);
+        }
     }
 
     public static Record getRecordFromDataFile(int recordLocation) {

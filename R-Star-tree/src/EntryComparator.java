@@ -21,9 +21,9 @@ public class EntryComparator implements Comparator<EntryComparator> {
 
     @Override
     public int compare(EntryComparator o1, EntryComparator o2) {
-        if (o1.valueToCompare < o2.valueToCompare) {
+        if (o1.getValueToCompare() < o2.getValueToCompare()) {
             return -1;
-        } else if (o1.valueToCompare > o2.valueToCompare) {
+        } else if (o1.getValueToCompare() > o2.getValueToCompare()) {
             return 1;
         }
         return 0;

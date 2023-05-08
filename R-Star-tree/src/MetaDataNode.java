@@ -2,16 +2,40 @@ import java.io.Serializable;
 
 public class MetaDataNode implements Serializable {
     private int totalNodesNum;
+    private int indexFileLocationForNewNode;
     private int totalLevelNum;
     private int nodeMaxEntriesNum;
     private int nodeMinEntriesNum;
     private int reInsertPEntries;
     private PriorityDeQueue alteredNodes;
+    private PriorityDeQueue emptyBlocksInIndexFile;
 
     public MetaDataNode() {
         totalNodesNum = 0;
+        indexFileLocationForNewNode = 0;
         totalLevelNum = 1;
         alteredNodes = new PriorityDeQueue();
+        emptyBlocksInIndexFile = new PriorityDeQueue();
+    }
+
+    public int getIndexFileLocationForNewNode() {
+        return indexFileLocationForNewNode;
+    }
+
+    public void increaseIndexFileLocationForNewNode() {
+        indexFileLocationForNewNode++;
+    }
+
+    public void addEmptyIndexNode(int locationInIndexFile) {
+        emptyBlocksInIndexFile.add(locationInIndexFile);
+    }
+
+    public boolean emptyIndexNodeExists() {
+        return !emptyBlocksInIndexFile.isEmpty();
+    }
+
+    public int getEmptyIndexLocation() {
+        return emptyBlocksInIndexFile.getMinEntry();
     }
 
     public void addAlteredNode(int i) {
@@ -48,7 +72,7 @@ public class MetaDataNode implements Serializable {
         this.totalNodesNum++;
     }
 
-    public void decreaseTotalNodesNum() {
+    public void decreaseTotalNodeNum() {
         this.totalNodesNum--;
     }
 
