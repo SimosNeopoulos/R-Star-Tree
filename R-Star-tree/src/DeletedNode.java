@@ -1,7 +1,6 @@
 import java.util.ArrayList;
-import java.util.Comparator;
 
-public class DeletedNode implements Comparator<DeletedNode> {
+public class DeletedNode implements Comparable<DeletedNode> {
 
     private int levelToInsertEntries;
     private ArrayList<Entry> entries;
@@ -24,7 +23,7 @@ public class DeletedNode implements Comparator<DeletedNode> {
     }
 
     @Override
-    public int compare(DeletedNode o1, DeletedNode o2) {
-        return Integer.compare(o1.getLevelToInsertEntries(), o2.getLevelToInsertEntries());
+    public int compareTo(DeletedNode other) {
+        return Integer.compare(this.levelToInsertEntries, other.levelToInsertEntries);
     }
 }
