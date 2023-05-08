@@ -83,8 +83,8 @@ public class RStarTree {
         }
 
         if (childNode.getEntries().size() <= DataHandler.getMinEntriesPerNode()) {
-            return condenseTree(parentNode, parentEntry, childNode);
-        } else if (parentEntry != null){
+            return condenseTree(parentEntry, childNode);
+        } else if (parentEntry != null) {
             parentEntry.reAdjustBoundingRectangle();
         }
 
@@ -93,7 +93,7 @@ public class RStarTree {
 
 
     //TODO: Να δω αν χρειάζεται να κάνω delete τα nodes απο το indexfile ή απλά να τα αφήνω εκεί
-    private NonLeafEntry condenseTree(Node parentNode, NonLeafEntry parentEntry, Node childNode) {
+    private NonLeafEntry condenseTree(NonLeafEntry parentEntry, Node childNode) {
 
         if (childNode.isRoot()) {
             if (childNode.getEntries().size() == 1 && !childNode.isLeaf()) {
@@ -106,28 +106,21 @@ public class RStarTree {
 
                 DataHandler.decreaseTotalLevelNum();
                 DataHandler.decreaseTotalNodeNum();
-
-                return null;
             }
-        } else {
-            deletedNodes.add(new DeletedNode(childNode.getTreeLevel(), childNode.getEntries()));
-            DataHandler.decreaseTotalNodeNum();
-            DataHandler.addEmptyIndexNode(childNode.getIndexBlockLocation());
-            //TODO: Εδω πρέπει να διαγράφω το node απο το αρχείο.
-
-            // TODO: Να δω αν το "-1" είναι σωστό
-            if (parentNode.getEntries().size() - 1 <= DataHandler.getMinEntriesPerNode()) {
-                return parentEntry;
-            }
+            return null;
         }
 
-        return null;
+        deletedNodes.add(new DeletedNode(childNode.getTreeLevel(), childNode.getEntries()));
+        DataHandler.decreaseTotalNodeNum();
+        DataHandler.addEmptyIndexNode(childNode.getIndexBlockLocation());
+
+        return parentEntry;
     }
 
     private void reInsertDeletedEntries() {
         while (!deletedNodes.isEmpty()) {
             DeletedNode deletedNode = deletedNodes.poll();
-            for (Entry entry: deletedNode.getEntries()) {
+            for (Entry entry : deletedNode.getEntries()) {
                 insert(entry, deletedNode.getLevelToInsertEntries(), null, null);
             }
         }
