@@ -37,7 +37,6 @@ public class RStarTree {
             System.out.println("Num of inserts: " + numOfInsertsTest);
             DataHandler.writeAlteredNodesToIndexFile();
         }
-        // TODO: ΟΤΑΝ ΥΠΑΡΧΕΙ ΗΔΗ ΚΑΤΑΛΟΓΟΣ
     }
 
     public int getTotalLevelNum() {
@@ -72,7 +71,6 @@ public class RStarTree {
             DataHandler.deleteSlot(leafEntry.getDataFileLocation());
             childNode.removeEntry(entryToDeleteLocation);
         } else {
-            // TODO: Το newParentEntry και το newDeleteEntry είναι πιθανός το ίδιο πράγμα
             NonLeafEntry newParentEntry = findLeaf(entryToDelete, childNode);
             NonLeafEntry newDeleteEntry = delete(entryToDelete, childNode, newParentEntry);
 
@@ -249,6 +247,16 @@ public class RStarTree {
 
     public Node getRoot() {
         return DataHandler.getNodeFromIndexFile(ROOT_LOCATION_IN_INDEX_FILE);
+    }
+
+    public ArrayList<LeafEntry> rangeQueryAlgorithm(BoundingRectangle boundingRectangle) {
+        RangeQuery rangeQuery = new RangeQuery(getRoot(), boundingRectangle);
+        return rangeQuery.rangeQuerySearch();
+    }
+
+    public ArrayList<LeafEntry> kNNQuery(int k, BoundingRectangle point) {
+     KNNQuery knnQuery = new KNNQuery(k, point);
+     return knnQuery.getKNNs(getRoot());
     }
 
     private static int getIndexForEntryToDelete(Entry entry, Node node) {
