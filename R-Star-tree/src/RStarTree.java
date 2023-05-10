@@ -50,11 +50,11 @@ public class RStarTree {
 
     public void deleteData(Entry entryToDelete) {
         deletedNodes = new PriorityQueue<>();
-        delete(entryToDelete, null, null);
+        delete(entryToDelete, null);
         reInsertDeletedEntries();
     }
 
-    private NonLeafEntry delete(Entry entryToDelete, Node parentNode, NonLeafEntry parentEntry) {
+    private boolean delete(Entry entryToDelete, NonLeafEntry parentEntry) {
         Node childNode;
 
         if (parentEntry == null) {
@@ -72,26 +72,26 @@ public class RStarTree {
             childNode.removeEntry(entryToDeleteLocation);
         } else {
             NonLeafEntry newParentEntry = findLeaf(entryToDelete, childNode);
-            NonLeafEntry newDeleteEntry = delete(entryToDelete, childNode, newParentEntry);
+            boolean deleteNewParentEntry = delete(entryToDelete, newParentEntry);
 
-            if (newDeleteEntry != null) {
-                if (!childNode.removeEntry(newDeleteEntry))
+            if (deleteNewParentEntry) {
+                if (!childNode.removeEntry(newParentEntry))
                     throw new IllegalStateException("Entry for deletion not found");
             }
         }
 
         if (childNode.getEntries().size() <= DataHandler.getMinEntriesPerNode()) {
-            return condenseTree(parentEntry, childNode);
+            return condenseTree(childNode);
         } else if (parentEntry != null) {
             parentEntry.reAdjustBoundingRectangle();
         }
 
-        return null;
+        return false;
     }
 
 
     //TODO: Να δω αν χρειάζεται να κάνω delete τα nodes απο το indexfile ή απλά να τα αφήνω εκεί
-    private NonLeafEntry condenseTree(NonLeafEntry parentEntry, Node childNode) {
+    private boolean condenseTree(Node childNode) {
 
         if (childNode.isRoot()) {
             if (childNode.getEntries().size() == 1 && !childNode.isLeaf()) {
@@ -105,14 +105,14 @@ public class RStarTree {
                 DataHandler.decreaseTotalLevelNum();
                 DataHandler.decreaseTotalNodeNum();
             }
-            return null;
+            return false;
         }
 
         deletedNodes.add(new DeletedNode(childNode.getTreeLevel(), childNode.getEntries()));
         DataHandler.decreaseTotalNodeNum();
         DataHandler.addEmptyIndexNode(childNode.getIndexBlockLocation());
 
-        return parentEntry;
+        return true;
     }
 
     private void reInsertDeletedEntries() {
