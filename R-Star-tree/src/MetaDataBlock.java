@@ -1,12 +1,13 @@
 import java.io.Serializable;
 
+// Κλάση που αναπαριστά το ένα meta data block των 32KB που περιέχει πληροφορίες σχετικά με το datafile
 public class MetaDataBlock implements Serializable {
     private int id;
     private int totalBlockNum;
     private int totalSlotsNum;
-    private int currentDimensions;
+    private final int currentDimensions;
     private PriorityDeQueue freeSlots;
-    private PriorityDeQueue alteredBlocks;
+    private final PriorityDeQueue alteredBlocks;
     private int maxRecordsPerBlock;
 
     public MetaDataBlock(int dimensionsNum) {

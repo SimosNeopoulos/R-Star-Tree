@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 
+// Συνάρτηση που υλοποιεί τον αλγόριθμο Range Query
 public class RangeQuery {
     private ArrayList<LeafEntry> validEntries;
     private Node root;
@@ -25,7 +26,6 @@ public class RangeQuery {
 
     private void search(Node node, BoundingRectangle searchBox) {
         if (!node.isLeaf()) {
-
             for (Entry entry : node.getEntries()) {
                 NonLeafEntry nonLeafEntry = (NonLeafEntry) entry;
 

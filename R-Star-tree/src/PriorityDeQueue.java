@@ -2,6 +2,8 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 
+// Κλάση που αποθηκεύει integers σε ένα HashSet.
+// Χρησιμοποιείτε, κυρίως, για να επιστρέψει το μικρότερο στοιχείο του set
 public class PriorityDeQueue implements Serializable {
     private HashSet<Integer> set;
 

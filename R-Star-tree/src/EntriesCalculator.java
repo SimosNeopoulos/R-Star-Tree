@@ -2,11 +2,14 @@ import java.util.ArrayList;
 
 import static java.lang.Math.sqrt;
 
+// Κλάση με στατικές μεθόδους
 public class EntriesCalculator {
-    private static int dimensionNum = DataHandler.getCurrentDimensions();
+    // Ο αριθμός των διαστάσεων των records
+    private final static int dimensionNum = DataHandler.getCurrentDimensions();
 
-    // Returns the minimum bounding box that contains the entries passed as a parameter
+    // Συνάρτηση που υπολογίζει το minimum bounding rectangle με βάση τα entries που περνιούνται ως παράμετρος
     public static BoundingRectangle getMinimumBoundingRectangleForEntries(ArrayList<Entry> entries) {
+        // Minimum και maximum bounds για κάθε διάσταση
         ArrayList<Double> minBounds = new ArrayList<>();
         ArrayList<Double> maxBounds = new ArrayList<>();
 
@@ -33,7 +36,9 @@ public class EntriesCalculator {
         return new BoundingRectangle(boundaries);
     }
 
-    // Works
+    // Παρόμοια με την "getMinimumBoundingRectangleForEntries"
+    // Συνάρτηση που υπολογίζει το νέο minimum bounding rectangle αν της μεταβλητής "boundingRectangle"
+    // αν θελήσουμε να περικλείει και την μεταβλητή "entry"
     public static BoundingRectangle getNewMinBoundingRectangle(BoundingRectangle boundingRectangle, Entry entry) {
         ArrayList<Double> minBounds = new ArrayList<>();
         ArrayList<Double> maxBounds = new ArrayList<>();
@@ -59,6 +64,8 @@ public class EntriesCalculator {
         return new BoundingRectangle(boundaries);
     }
 
+    // Συνάρτηση που υλοποιεί τον αλγόριθμο "chooseSplitAxis".
+    // TODO: να δω αν θέλω να προσθέσω σχόλια
     public static ArrayList<Distributions> chooseSplitAxis(Node nodeToSplit) {
 
         ArrayList<Distributions> splitAxis = new ArrayList<>();
@@ -123,6 +130,8 @@ public class EntriesCalculator {
         return splitAxis;
     }
 
+    // Συνάρτηση που υλοποιεί τον αλγόριθμο "chooseSplitIndex".
+    // TODO: να δω αν θέλω να προσθέσω σχόλια
     public static ArrayList<Node> chooseSplitIndex(ArrayList<Distributions> splitAxis, int levelOnTree) {
 
         double minOverlapValue = Double.MAX_VALUE;
@@ -161,6 +170,8 @@ public class EntriesCalculator {
         return splittedNodes;
     }
 
+    // Συνάρτηση που δέχεται ενα ArrayList<EntryComparator> και επιστρέφει ένα ArrayList με τα entries
+    // απο τα EntryComparator αντικείμενα
     public static ArrayList<Entry> getEntriesFromEntryComparator(ArrayList<EntryComparator> comparatorEntries) {
         ArrayList<Entry> entries = new ArrayList<>();
         for (EntryComparator comparatorEntry : comparatorEntries) {
@@ -169,6 +180,8 @@ public class EntriesCalculator {
         return entries;
     }
 
+    // Συνάρτηση που δέχεται ενα ArrayList<EntryComparator> και επιστρέφει ένα ArrayList με τα leaf entries
+    // απο τα EntryComparator αντικείμενα
     public static ArrayList<LeafEntry> getLeafEntriesFromEntryComparator(ArrayList<EntryComparator> comparatorEntries) {
         ArrayList<LeafEntry> entries = new ArrayList<>();
         for (EntryComparator comparatorEntry : comparatorEntries) {
@@ -177,6 +190,8 @@ public class EntriesCalculator {
         return entries;
     }
 
+    // Συνάρτηση που υπολογίζει τη minimum απόσταση ενός boundingRectangle απο ένα σημείο (point),
+    // σύμφωνα με τον αλγόριθμο MINDIST(R,P)
     public static double calculateMinDistanceFromPoint(BoundingRectangle boundingRectangle, BoundingRectangle point) {
         double minDistance = 0;
 
@@ -185,13 +200,9 @@ public class EntriesCalculator {
             Bounds currentBound = boundingRectangle.getBoundsOfDimension(i);
             double ri;
 
-            if(currentBound.getLowerBound() > pi) {
+            if (currentBound.getLowerBound() > pi) {
                 ri = currentBound.getLowerBound();
-            } else if (currentBound.getUpperBound() < pi) {
-                ri = currentBound.getUpperBound();
-            } else {
-                ri = pi;
-            }
+            } else ri = Math.min(currentBound.getUpperBound(), pi);
 
             minDistance += Math.pow(pi - ri, 2);
         }
@@ -199,32 +210,38 @@ public class EntriesCalculator {
         return minDistance;
     }
 
+    // Συνάρτηση που ελέγχει αν υπάρχει overlap μεταξύ δυο bounding rectangles
     public static boolean checkOverlap(BoundingRectangle boundingRectangleA, BoundingRectangle boundingRectangleB) {
-        // For every dimension find the intersection point
+        // Έλεγχος overlap για κάθε διάσταση
         for (int i = 0; i < DataHandler.getCurrentDimensions(); i++) {
-            double overlapD = calculateOverlapInDimension(boundingRectangleA, boundingRectangleB, i);
+            double overlap = calculateOverlapInDimension(boundingRectangleA.getBoundsOfDimension(i),
+                    boundingRectangleB.getBoundsOfDimension(i));
 
-            if (overlapD < 0) //TODO check if "=" is needed or not
+            // Αν δεν υπάρχει overlap έστω και σε μια διάσταση δεν υπάρχει overlap
+            if (overlap < 0) //TODO check if "=" is needed or not
                 return false;
         }
         return true;
     }
 
-    // Calculates and returns the overlap value between two bounding boxes
+    // Συνάρτηση που υπολογίζει το overlap value μεταξύ δυο bounding rectangles
     public static double calculateOverlapValue(BoundingRectangle boundingRectangleA, BoundingRectangle boundingRectangleB) {
         double overlapValue = 1;
-        // For every dimension find the intersection point
+        // Έλεγχος overlap για κάθε διάσταση
         for (int i = 0; i < DataHandler.getCurrentDimensions(); i++) {
-            double overlapD = calculateOverlapInDimension(boundingRectangleA, boundingRectangleB, i);
+            double overlap = calculateOverlapInDimension(boundingRectangleA.getBoundsOfDimension(i),
+                    boundingRectangleB.getBoundsOfDimension(i));
 
-            if (overlapD <= 0) //TODO check if "=" is needed or not
-                return 0; // No overlap, return 0
-            else
-                overlapValue *= overlapD;
+            // Αν δεν υπάρχει overlap έστω και σε μια διάσταση δεν υπάρχει overlap
+            if (overlap <= 0) {
+                return 0;
+            }
+            overlapValue *= overlap;
         }
         return overlapValue;
     }
 
+    // Συνάρτηση που υπολογίζει την απόσταση των κέντρων μεταξύ δυο entries
     public static double calculateCenterDistanceOfEntries(Entry entryA, Entry entryB) {
         double distance = 0;
         // For every dimension find the intersection point
@@ -234,12 +251,11 @@ public class EntriesCalculator {
         return sqrt(distance);
     }
 
-    private static double calculateOverlapInDimension(BoundingRectangle boundingRectangleA, BoundingRectangle boundingRectangleB, int dimension) {
-        return Math.min(boundingRectangleA.getBoundsOfDimension(dimension).getUpperBound(),
-                boundingRectangleB.getBoundsOfDimension(dimension).getUpperBound())
+    // Υπολογισμός του overlap value ανάμεσα σε δυο bounds
+    private static double calculateOverlapInDimension(Bounds boundA, Bounds boundB) {
+        return Math.min(boundA.getUpperBound(),boundB.getUpperBound())
                 -
-                Math.max(boundingRectangleA.getBoundsOfDimension(dimension).getLowerBound(),
-                        boundingRectangleB.getBoundsOfDimension(dimension).getLowerBound());
+               Math.max(boundA.getLowerBound(), boundB.getLowerBound());
     }
 
 

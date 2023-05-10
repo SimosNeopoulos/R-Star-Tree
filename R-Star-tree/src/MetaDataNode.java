@@ -1,5 +1,6 @@
 import java.io.Serializable;
 
+// Κλάση που αναπαριστά το ένα meta data node των 32KB που περιέχει πληροφορίες σχετικά με το index file
 public class MetaDataNode implements Serializable {
     private int totalNodesNum;
     private int indexFileLocationForNewNode;

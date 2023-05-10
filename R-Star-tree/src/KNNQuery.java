@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 
+// Κλάση που υλοποιεί τον αλγόριθμο k-Nearest Neighbour.
 public class KNNQuery {
     private int k;
     private double searchRadius;
@@ -19,6 +20,7 @@ public class KNNQuery {
         return getEntriesFromPriorityQueue();
     }
 
+    // Συνάρτηση που επιστέφει όλα τα entries απο το PriorityQueue σε ArrayList
     private ArrayList<LeafEntry> getEntriesFromPriorityQueue() {
         ArrayList<EntryComparator> knnComparatorList = new ArrayList<>();
         while (!this.kNNs.isEmpty()) {
@@ -46,15 +48,22 @@ public class KNNQuery {
         return comparedEntries;
     }
 
+
+    // Η συνάρτηση που υλοποιεί τον k-Nearest Neighbour αλγόριθμο
     private void kNNQuery(Node node) {
+        // Ταξινόμηση όλων των entries του node με βάση την απόσταση τους απο το σημείο (point)
         ArrayList<EntryComparator> entries = getSortedEntriesForKNN(node);
 
         if (!node.isLeaf()) {
             for (EntryComparator entry : entries) {
+                // Αφού τα entries είναι ταξινομημένα στην περίπτωση που ένα entry είναι εκτός του searchRadius
+                // δεν υπάρχει λόγος να συνεχίζουμε την αναζήτηση για κατάλληλα entries σε αυτόν τον κόμβο
                 if (entry.getValueToCompare() > this.searchRadius) {
                     break;
                 }
                 NonLeafEntry nonLeafEntry = (NonLeafEntry) entry.getEntry();
+
+                // Καλούμε αναδρομικά τη συνάρτηση kNNQuery για κάθε child node του "node" που τηρεί τις παραπάνω προυποθέσεις
                 kNNQuery(DataHandler.getNodeFromIndexFile(nonLeafEntry.getChildPTR()));
             }
         } else {

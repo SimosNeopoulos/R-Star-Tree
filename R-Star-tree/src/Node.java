@@ -1,6 +1,7 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
+// Κλάση που αναπαριστά το ένα data node των 32KB που περιέχει τα entries που αποθηκεύονται στο index file
 public class Node implements Serializable {
     private int indexBlockLocation;
     private int treeLevel;

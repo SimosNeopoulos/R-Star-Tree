@@ -1,6 +1,6 @@
 import java.util.Comparator;
 
-//Used for reInsert and chooseAxis
+// Συνάρτηση που χρησιμοποιείτε όταν θέλουμε να ταξινομήσουμε entries ως προς κάποια τιμή (valueToCompare)
 public class EntryComparator implements Comparator<EntryComparator> {
     private double valueToCompare;
     private Entry entry;

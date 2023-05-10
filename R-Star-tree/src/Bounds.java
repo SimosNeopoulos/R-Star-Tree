@@ -1,5 +1,6 @@
 import java.io.Serializable;
 
+// Κλάση που αναπαριστά το upper και το lower bound ενός αντικειμένου σε μία διάσταση
 public class Bounds implements Serializable {
 
     private final double upperBound;

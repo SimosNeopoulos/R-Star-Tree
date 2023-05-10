@@ -1,5 +1,8 @@
 import java.util.ArrayList;
 
+// Συνάρτηση που χρησιμοποιείται για να την αποθήκευση ενός συνόλου απο entries
+// και του Bounding Rectangle που τις περικλείει
+// Χρησιμοποιείται στον αλγόριθμο chooseSplitAxis και chooseSplitIndex
 public class DistributionGroup {
 
     private ArrayList<Entry> entries;

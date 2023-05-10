@@ -1,6 +1,6 @@
 import java.io.Serializable;
-import java.util.ArrayList;
 
+// Κλάση που αναπαριστά τα entries στο επίπεδο των φύλλων
 public class LeafEntry implements Serializable, Entry {
     private BoundingRectangle boundingRectangle;
     private long objectId;

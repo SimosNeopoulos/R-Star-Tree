@@ -1,6 +1,7 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
+// Κλάση που αναπαριστά τα entries του δέντρου τα οποία δεν βρίσκονται στα φύλλα
 public class NonLeafEntry implements Serializable, Entry  {
     private BoundingRectangle boundingRectangle;
     private int childPTR;

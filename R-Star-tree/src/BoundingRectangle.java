@@ -1,6 +1,7 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
+//Κλάση που αναπαριστά το Bounding Rectangle ενός αντικειμένου
 public class BoundingRectangle implements Serializable {
     private final ArrayList<Bounds> boundaries;
     private double area;
