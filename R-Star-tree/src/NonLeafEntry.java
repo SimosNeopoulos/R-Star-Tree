@@ -24,6 +24,16 @@ public class NonLeafEntry implements Serializable, Entry  {
         return childPTR;
     }
 
+    @Override
+    public boolean isDominatedByEntry(Entry entry) {
+        for (int i = 0; i < DataHandler.getCurrentDimensions(); i++) {
+            double currentLowerBound = entry.getBoundingRectangle().getBoundsOfDimension(i).getLowerBound();
+            if (currentLowerBound < boundingRectangle.getBoundsOfDimension(i).getLowerBound())
+                return true;
+        }
+        return false;
+    }
+
     public void reAdjustBoundingRectangle() {
         this.boundingRectangle = EntriesCalculator.getMinimumBoundingRectangleForEntries(DataHandler.getNodeFromIndexFile(childPTR).getEntries());
     }

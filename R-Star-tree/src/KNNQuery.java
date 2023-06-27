@@ -3,10 +3,10 @@ import java.util.PriorityQueue;
 
 // Κλάση που υλοποιεί τον αλγόριθμο k-Nearest Neighbour.
 public class KNNQuery {
-    private int k;
+    private final int k;
     private double searchRadius;
-    private BoundingRectangle point;
-    private PriorityQueue<EntryComparator> kNNs;
+    private final BoundingRectangle point;
+    private final PriorityQueue<EntryComparator> kNNs;
 
     public KNNQuery(int k, BoundingRectangle point) {
         this.k = k;

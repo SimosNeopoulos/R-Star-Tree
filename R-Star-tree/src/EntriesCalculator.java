@@ -258,5 +258,14 @@ public class EntriesCalculator {
                Math.max(boundA.getLowerBound(), boundB.getLowerBound());
     }
 
+    public static double getMinDistOfEntry(Entry entry) {
+        double minDistance = 0;
+        for (Bounds bounds: entry.getBoundingRectangle().getBoundaries()) {
+            minDistance += Math.abs(bounds.getLowerBound());
+        }
+
+        return minDistance;
+    }
+
 
 }

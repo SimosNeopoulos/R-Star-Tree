@@ -8,16 +8,20 @@ public class DataHandler {
     private static final String PATH_TO_INDEX_FILE = "index_file.dat";
     private static final String PATH_TO_CSV = "nodes.csv";
     private static final int BLOCK_SIZE = 32 * 1024;
-    private static MetaDataBlock metaDataBlock;
+
+    // Τα data blocks που έχουν φορτωθεί απο το datafile
     private static final HashMap<Integer, DataBlock> dataBlocksInMemory = new HashMap<>();
+
+    // Τα node blocks που έχουν φορτωθεί απο το index file
     private static final HashMap<Integer, Node> nodesInMemory = new HashMap<>();
+    private static MetaDataBlock metaDataBlock;
     private static MetaDataNode metaDataNode;
 
     private static boolean isNodeInMemory(int nodeIndex) {
         return nodesInMemory.containsKey(nodeIndex);
     }
 
-    public static int gettotalNodesInIndex() {
+    public static int getTotalNodesInIndex() {
         return metaDataNode.getTotalNodesNum();
     }
 
@@ -29,7 +33,6 @@ public class DataHandler {
         return metaDataNode.getTotalLevelNum();
     }
 
-    // Works
     public static void addAlteredNode(int i) {
         metaDataNode.addAlteredNode(i);
     }
@@ -38,7 +41,7 @@ public class DataHandler {
         return metaDataNode.getAlteredNodesNum();
     }
 
-    // Works (probably)
+    // Initialising the datafile
     public static boolean initialiseIndexFile() {
         if (new File(PATH_TO_INDEX_FILE).exists()) {
             metaDataNode = readMetaDataNode();
@@ -48,7 +51,7 @@ public class DataHandler {
         return false;
     }
 
-    // Works (probably)
+    // Αν δεν υπάρχει ήδη index file δημιουργούμε έναν καινούριο
     private static void createIndexFile() {
         metaDataNode = new MetaDataNode();
         createRoot();
@@ -58,23 +61,21 @@ public class DataHandler {
         writeAlteredNodesToIndexFile();
     }
 
-    // Works
+    // Προσθέτουμε ένα node στη μνήμη και το προσθέτουμε στο set των addAlteredNode
+    // ώστε να το γράψουμε στο index file στο τέλος της εκτέλεσης του προγράμματος
     public static void updateNode(Node node) {
         nodesInMemory.put(node.getIndexBlockLocation(), node);
         addAlteredNode(node.getIndexBlockLocation());
     }
 
-    // Works
     public static void increaseTotalLevelNum() {
         metaDataNode.increaseTotalLevelNum();
     }
 
-    // Works
     public static void decreaseTotalLevelNum() {
         metaDataNode.decreaseTotalLevelNum();
     }
 
-    // Works
     public static void increaseTotalNodeNum() {
         metaDataNode.increaseTotalNodesNum();
     }

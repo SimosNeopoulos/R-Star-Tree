@@ -1,4 +1,3 @@
-import java.io.*;
 import java.util.ArrayList;
 
 // Μόνο για tests
@@ -58,7 +57,7 @@ public class Main {
             Main main = new Main();
             main.numOfLeafEntries(root);
             System.out.println("Num of Entries: " + main.numOfEntries);
-            System.out.println("Num of nodes in RTree: " + DataHandler.gettotalNodesInIndex());
+            System.out.println("Num of nodes in RTree: " + DataHandler.getTotalNodesInIndex());
             System.out.println();
         }
 
